@@ -1,0 +1,17 @@
+body, .hentry, .entry-content, .pentry-content{
+	border: 0 !important;
+	width: auto !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.dateline, #navigation, #linklist, #breadcrumbs, #footer, h2, #logo {
+	display: none;
+	}
+
+img.story {
+	float: left !important;
+	margin: 0 10px 10px 0 !important;
+	border: 1px solid #000 !important;
+} 
+	

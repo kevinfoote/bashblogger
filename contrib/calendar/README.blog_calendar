@@ -1,0 +1,14 @@
+This little script will create a calendar that has links to
+the days where you made blog posts. If you didn't post on
+a given day, there will be no link for that day.
+
+You can see a working example of this at:
+http://doug.hunley.homeip.net/
+
+To use:
+1) Create a new link box on your blog, called Calendar
+2) adjust the script as needed to match your install
+3) add the script to your daily crontab
+4) Enjoy
+
+Doug - doug@hunley.homeip.net

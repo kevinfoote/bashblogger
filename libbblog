@@ -1,0 +1,519 @@
+# This is a library of functions that are used by various bits of the
+# BashBlogger tool, installer, and upgrader. You can use it in your
+# own tools by adding 'source $HOME/.bashblogger/libbblog
+
+# Variables concerning the installed version
+installed_bblog=`which bblog 2>/dev/null`
+if [ ! -z "$installed_bblog" ] ; then
+  installed_version=`grep ^VERSION ${installed_bblog} | cut -d\= -f2| tr -d \"`
+  installed_version_nodots=`echo ${installed_version} | tr -d .`
+else
+  installed_version="0.0.0"
+  installed_version_nodots="000"
+fi
+
+# Variables concerning the version we're installing
+our_version=`grep ^VERSION ./bblog | cut -d\= -f2 | tr -d \"`
+our_version_nodots=`echo ${our_version} | tr -d .`
+
+# Our functions
+
+tell() {
+  if [ ! -z "${2}" ] ; then
+    clear
+  fi
+
+  echo "${1}"
+}
+
+tell_nobr() {
+  if [ ! -z "${2}" ] ; then
+    clear
+  fi
+
+  echo -n "${1}"
+}
+
+find_install_dir() 
+{
+  echo ${PATH} | sed 's/:/\n/g' > /tmp/path_per_line
+  count_path=`wc -l /tmp/path_per_line | awk '{print $1}'`
+  while [ ${count_path} -gt 0 ]
+  do
+    path_item=`head -n ${count_path} /tmp/path_per_line | tail -n 1`
+    if [ -w ${path_item} ] ; then
+      echo ${path_item} >> /tmp/writeable_path
+    fi
+    count_path=$(( $count_path-1 ))
+  done
+  touch /tmp/writeable_path
+  sort -u /tmp/writeable_path > /tmp/path_per_line
+  count_path=`wc -l /tmp/path_per_line | awk '{print $1}'`
+  if [ ${count_path} -eq 0 ] ; then
+    tell "I couldnt find anywhere in your PATH to install to!" 
+    tell "Perhaps you should run me as root instead?"
+    tell "FWIW, I searched the following: $PATH"
+    exit 1
+  else
+    if [ ${EUID} -ne 0 ] ; then
+      tell "I found the following locations as install choices." 
+      tell "If you dont like these choices, re-run me as root or alter your PATH"
+      tell ""
+    else
+      tell "I found the following locations as install choices." 
+      tell ""
+    fi
+  fi
+  while [ ${count_path} -gt 0 ]
+  do
+    tell "${count_path} `head -n ${count_path} /tmp/path_per_line | tail -n 1`"
+    count_path=$(( ${count_path} - 1 ))
+  done
+  tell "${count_path} Um, those suck. I will re-run this as root"
+  tell ""
+  tell_nobr "Make your selection "
+  read -n1 choice
+  case ${choice} in
+    0) 
+      rm /tmp/path_per_line
+      rm /tmp/writeable_path
+      tell ""
+      exit 0
+      ;;
+    [1-9]*)
+      tell ""
+      ;;
+    x|X|q|Q)
+      rm /tmp/path_per_line
+      rm /tmp/writeable_path
+      tell ""
+      exit 0
+      ;;
+    *)
+      rm /tmp/path_per_line
+      rm /tmp/writeable_path
+      tell "Bad choice"
+      exit 1
+      ;;
+  esac
+  install_path=`head -n ${choice} /tmp/path_per_line | tail -n 1`
+  export $install_path
+  rm /tmp/path_per_line
+}
+
+build_bblog_conf() {
+  # Pull in some defaults
+  if [ -e ${HOME}/.bblog.conf ] ; then
+    source ${HOME}/.bblog.conf
+  else
+    source ./bblog.conf.sample
+  fi
+
+  tell "Building the bblog.conf file. You can always edit these values post-install, and you can simply press ENTER for the default shown" 
+  tell ""
+  tell_nobr "What do you call your blog? (${SITENAME}) "
+  read sitename
+  if [ -z "${sitename}" ] ; then
+    sitename="${SITENAME}"
+  fi
+  echo "## What do you call your blog?" > ${HOME}/.bblog.conf
+  echo "SITENAME=\"${sitename}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "What is the description for your blog/RSS feed? (${DESCRIPTION}) "
+  read description
+  if [ -z "${description}" ] ; then
+    description="${DESCRIPTION}"
+  fi
+  echo "## This is your \"blog tagline/RSS channel description\"" >> ${HOME}/.bblog.conf
+  echo "DESCRIPTION=\"${description}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Your name or handle? (${AUTHOR}) "
+  read author
+  if [ -z "${author}" ] ; then
+    author="${AUTHOR}"
+  fi
+  echo "## Your name or handle" >> ${HOME}/.bblog.conf
+  echo "AUTHOR=\"${author}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Your email address? (${AUTHOR_EMAIL}) "
+  read author_email
+  if [ -z "${author_email}" ] ; then
+    author_email="${AUTHOR_EMAIL}"
+  fi
+  echo "## Your email address" >> ${HOME}/.bblog.conf
+  echo "AUTHOR_EMAIL=\"${author_email}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Path to your HTML dir? (${HOME}/public_html) "
+  read rootdir
+  if [ -z "${rootdir}" ] ; then
+    rootdir="${HOME}/public_html"
+  fi
+  echo "## This is where your blog lives.  Usually it is somewhere a webserver" >> ${HOME}/.bblog.conf
+  echo "## can find it (ex. /var/www/html). If you're using this as a personal diary," >> ${HOME}/.bblog.conf
+  echo "## you'll want to poin it to a directory in your $HOME, like" >> ${HOME}/.bblog.conf
+  echo "## /home/user/public_html" >> ${HOME}/.bblog.conf
+  echo "ROOTDIR=\"${rootdir}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  # Unconditionally set the config dir
+  echo "# Where does the BashBlogger configuration live?" >> ${HOME}/.bblog.conf
+  echo "CONF_DIR=\"${HOME}/.bashblogger\"" >> ${HOME}/.bblog.conf 
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "The URL of your blog? (${URL}) "
+  read url
+  if [ -z "${url}" ] ; then
+    url="${URL}"
+  fi
+  echo "## This is the baseURL to your blog.  If your chose to use bashblogger as" >> ${HOME}/.bblog.conf
+  echo "## a personal journal, this should match $ROOTDIR" >> ${HOME}/.bblog.conf
+  echo "URL=\"${url}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Use cool URIs? Enter 0 for a journal, 1 for a blog. (${COOL_URI}) "
+  read cool_uri
+  if [ -z "${cool_uri}" ] ; then
+    cool_uri="${COOL_URI}"
+  fi
+  echo "## If you're using bashblogger for a personal journal set this to 0," >> ${HOME}/.bblog.conf
+  echo "## otherwise, leave it at 1.  All this does is make the links either" >> ${HOME}/.bblog.conf
+  echo "## point to the index.html (0) or the directory that contains the" >> ${HOME}/.bblog.conf
+  echo "## index.html (1)." >> ${HOME}/.bblog.conf
+  echo "COOL_URI=\"${cool_uri}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Your editor of choice? (${EDITOR}) "
+  read editor
+  if [ -z "${editor}" ] ; then
+    editor="${EDITOR}"
+  fi
+  echo "## Your editor of choice" >> ${HOME}/.bblog.conf
+  echo "EDITOR=\"${editor}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Your default formatting plugin? (${FORMATTING_PLUGIN})"
+  read formatting_plugin
+  if [ -z "${formatting_plugin}" ] ; then
+    formatting_plugin="${FORMATTING_PLUGIN}"
+  fi
+  echo "## Path to formatting plugin (e.g. Markdown.pl)" >> ${HOME}/.bblog.conf
+  echo "## If you're not sure, /bin/cat is fine" >> ${HOME}/.bblog.conf
+  echo "FORMATTING_PLUGIN=\"${formatting_plugin}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Your default spell-checker? (${SPELLCHECKER}) "
+  read spellchecker
+  if [ -z "${spellchecker}" ] ; then
+    spellchecker="${SPELLCHECKER}"
+  fi
+  echo "## Path to your spellchecker" >> ${HOME}/.bblog.conf
+  echo "SPELLCHECKER=\"${spellchecker}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+  tell_nobr "Always spellcheck new articles? 1 = yes, 0 = no (${AUTOSPELL}) "
+  read autospell
+  if [ -z "${autospell}" ] ; then
+    autospell="${AUTOSPELL}"
+  fi
+  echo "## Always spellcheck on new article? (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "AUTOSPELL=\"${autospell}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Your character set? (${CHARSET}) "
+  read charset
+  if [ -z "${charset}" ] ; then
+    charset="${CHARSET}"
+  fi
+  echo "## The character set your system uses" >> ${HOME}/.bblog.conf
+  echo "CHARSET=\"${charset}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "What language is your blog in? (${LANG}) "
+  read lang
+  if [ -z "${lang}" ] ; then
+    lang="${LANG}"
+  fi
+  echo "## The language in which your blog was written" >> ${HOME}/.bblog.conf
+  echo "LANG=\"${LANG}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "How many articles should appear on the front page? (${MAXENTRIES}) "
+  read maxentries
+  if [ -z "${maxentries}" ] ; then
+    maxentries="${MAXENTRIES}"
+  fi
+  echo "## The maximum number of articles that appear on the front page" >> ${HOME}/.bblog.conf
+  echo "MAXENTRIES=\"${maxentries}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Offer an RSS feed of your site? 1 = yes, 0 = no (${RSS}) "
+  read rss
+  if [ -z "${rss}" ] ; then
+    rss="${RSS}"
+  fi
+  echo "## Want an RSS feed for your blog? (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "RSS=\"${rss}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  if [ 1 -eq "${rss}" ] ; then
+    tell ""
+    tell_nobr "How many articles in your RSS feed at one time? (${RSS_MAXENTRIES}) "
+    read rss_maxentries
+    if [ ! -z "${rss_maxentries}" ] ; then
+      RSS_MEXENTRIES="${rss_maxentries}"
+    fi
+  tell "" 
+  tell_nobr "An icon for your RSS feed? (${ICON}) "
+  read icon
+  if [ -z "${icon}" ] ; then
+    icon="${ICON}"
+  fi
+  echo "## Set the URL for an icon to be associated with your RSS feed." >> ${HOME}/.bblog.conf
+  echo "ICON=\"${icon}\"" >> ${HOME}/.bblog.conf
+  echo "ICON_WIDTH=\"88\"" >> ${HOME}/.bblog.conf
+  echo "ICON_HEIGHT=\"31\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  fi
+  echo "## The number of articles that are included in your RSS feed." >> ${HOME}/.bblog.conf
+  echo "RSS_MAXENTRIES=\"${RSS_MAXENTRIES}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Will you be making podcasts? 1 = yes, 0 = no (${PODCAST}) "
+  read podcast
+  if [ -z "${podcast}" ] ; then
+    podcast="${PODCAST}"
+  fi
+  echo "## Want to include podcasts in your RSS feed? (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "PODCAST=\"${podcast}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  # Unconditionally set the time format. User can adjust it later
+  echo >> ${HOME}/.bblog.conf
+  echo "TIMESTAMP=\`date +\"%A, %B %e, %Y\"\`" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Display a sidebox w/ recent posts? 1 = yes, 0 = no (${RECENT_ENTRIES}) "
+  read recent_entries
+  if [ -z "${recent_entries}" ] ; then
+    recent_entries="${RECENT_ENTRIES}"
+  fi
+  echo "## Display a sidebox with the last X number of articles" >> ${HOME}/.bblog.conf
+  echo "## (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "RECENT_ENTRIES=\"${recent_entries}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  if [ 1 -eq "${recent_entries}" ] ; then
+    tell ""
+    tell_nobr "How many entries should we show? (${NUM_RECENT_ENTRIES}) "
+    read num_recent_entries
+    if [ ! -z "${num_recent_entries}" ] ; then
+      NUM_RECENT_ENTRIES="${num_recent_entries}"
+    fi
+  fi
+  echo "## How many articles do you want to show?" >> ${HOME}/.bblog.conf
+  echo "NUM_RECENT_ENTRIES=\"${NUM_RECENT_ENTRIES}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Show a sidebox w/ your categories/tags and their counts? 1 = yes, 0 = no (${CAT_SIDEBAR}) "
+  read cat_sidebar
+  if [ -z "${cat_sidebar}" ] ; then
+    cat_sidebar="${CAT_SIDEBAR}"
+  fi
+  echo "## Display a sidebox w/ your blog categories/tags and their counts (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "CAT_SIDEBAR=\"${cat_sidebar}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Show a Google search box? 1 = yes, 0 = no (${SEARCH}) "
+  read search
+  if [ -z "${search}" ] ; then
+    search="${SEARCH}"
+  fi
+  echo "## Display google site-search of your blog in sidebox of" >> ${HOME}/.bblog.conf
+  echo "## front page. (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "SEARCH=\"${search}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Display a random quote box? 1 = yes, 0 = no (${QUOTES}) "
+  read quotes
+  if [ -z "${quotes}" ] ; then
+    quotes="${QUOTES}"
+  fi
+  echo "## Display random quote in sidebox of front page. (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "## (These quotes can be edited in ~/.bashblogger/quotes)" >> ${HOME}/.bblog.conf
+  echo "QUOTES=\"${quotes}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Turn on autoformat (usually safe)? 1 = yes, 0 = no (${AUTOFORMAT}) "
+  read autoformat
+  if [ -z "${autoformat}" ] ; then
+    autoformat="${AUTOFORMAT}"
+  fi
+  echo "## The autoformat option wraps each line in <p> tags.  This is pretty safe" >> ${HOME}/.bblog.conf
+  echo "## if you're just writing text, but it tends to be a nusiance if you have" >> ${HOME}/.bblog.conf
+  echo "## anything complicated on your page (i.e. blockquotes, lists, etc.)" >> ${HOME}/.bblog.conf
+  echo "## (yes=1, no=0)" >> ${HOME}/.bblog.conf
+  echo "AUTOFORMAT=\"${autoformat}\"" >> ${HOME}/.bblog.conf
+
+  tell "" 
+  tell_nobr "Are you running BashBlogger on the web server that will host your site? y/n (n) "
+  read is_server
+  if [ ! "${is_server}" = "y" ] ; then
+    tell_nobr "Shall we use scp or rsync to maintain the remote copy? (${SYNCPROTO})"
+    read syncproto
+    tell_nobr "What is the remote hosts name? (${REMOTEHOST}) "
+    read remotehost
+    tell_nobr "What is the username to login as on the remote host? (${REMOTEUSER}) "
+    read remoteuser
+    tell_nobr "What is the path to the server root on the remote host? (${ROOTDIR}) "
+    read remoteroot
+  if [ ! -z "${syncproto}" ] ; then 
+    SYNCPROTO="${syncproto}"
+  fi
+  if [ ! -z "${remotehost}" ] ; then
+    REMOTEHOST="${remotehost}"
+  fi
+  if [ ! -z "${remoteuser}" ] ; then 
+    REMOTEUSER="${remoteuser}"
+  fi
+  if [ ! -z "${remoteroot}" ] ; then
+    REMOTEROOT="${remoteroot}"
+  fi
+  if [[ ! "${SYNCOPTS}" = "-rCp" && ! "${SYNCOPTS}" = "-aHz 9 --progress --delay-update" ]] ; then
+    if [ "${SYNCPROTO}" = "scp" ] ; then
+      SYNCOPTS="-rCp"
+    else
+      SYNCOPTS="-aHz 9 --progress --delay-updates"
+    fi
+  fi
+  echo >> ${HOME}/.bblog.conf
+  echo "## Select which protocol you want to use for remote site syncronization" >> ${HOME}/.bblog.conf
+  echo "## \"scp\" and \"rsync\" are the only valid options" >> ${HOME}/.bblog.conf
+  echo "SYNCPROTO=\"${SYNCPROTO}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+  echo "## Remote host needs to be the URI of the host you wish to sync your blog" >> ${HOME}/.bblog.conf
+  echo "REMOTEHOST=\"${REMOTEHOST}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+  echo "## Remote userid to login as" >> ${HOME}/.bblog.conf
+  echo "REMOTEUSER=\"${REMOTEUSER}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+  echo "## The path to the root of your blog on the remote server." >> ${HOME}/.bblog.conf
+  echo "REMOTEROOT=\"${REMOTEROOT}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+  cat << EOF >> ${HOME}/.bblog.conf
+### SYNCOPTS for rsync "--progress --delay-updates --delete -ahz 9"
+### SYNCOPTS for scp "-rCp"
+### The scp method (for now) is a brute force, entire site reload.  In the
+### future, this should be a bit more elegant, for now, if it's the only
+### method at your disposal, it may take a bit.
+###
+### NOTE: you may not want to use "--delete" if you upload other files that
+### you dont mirror locally
+### 
+### NOTE:  you must escape the dashes
+EOF
+  echo "SYNCOPTS=\"${SYNCOPTS}\"" >> ${HOME}/.bblog.conf
+  echo >> ${HOME}/.bblog.conf
+  fi
+
+  # now, read the newly created file
+  source ${HOME}/.bblog.conf
+}
+
+build_rootdir() {
+tell "Populating the BashBlogger root directory:"
+install -v -d -m 0755 ${ROOTDIR}
+if [ ! -e "${ROOTDIR}/favicon.ico" ] ; then
+  install -v -m 0755 ./rootdir/favicon.ico ${ROOTDIR}
+fi
+if [ ! -e "${ROOTDIR}/print.css" ] ; then
+  install -v -m 0755 ./rootdir/print.css ${ROOTDIR}
+fi
+find ./rootdir/theme -type d | grep -v ".svn" | cut -d\/ -f3-| sort | while read dir
+do
+  install -v -d -m 0755 ${ROOTDIR}/${dir}
+done
+find ./rootdir/theme -type f | grep -v ".svn" | sort | while read item
+do
+  install -v -m 0755 ${item} `echo "$item" | sed "s#\./rootdir#$ROOTDIR#"`
+done
+}
+
+congrats() 
+{
+tell " Congratulations.  Bashblogger seems to be succesfully configured." 
+tell ""
+tell " If you have any problems, complaints, sugguestions, questions,   "
+tell " or you would like to regale me with your encyclopedic knowledge  "
+tell " of Evil Dead trivia, email me at:                                "
+tell ""
+tell "         grim@grimthing.com                                       "
+tell ""
+tell " Include bashblogger ( one word ) in the subject line.  Due to    "
+tell " the deluge of spam, I will not receive your email if bashblogger "
+tell " does not appear somewhere in the subject line.                   "
+tell ""
+tell " Anyways, type bblog and blog away.                             "
+tell ""
+}
+
+# This function expects you pass in the version as the first arg
+# e.g. verify_md5sum 0.3.6
+verify_md5sum()
+{
+check_version="$1"
+
+if [ ! -e "./MD5SUMS-${check_version}" ] ; then
+  tell "WTF I cant find the MD5SUM file for version ${check_version}" 
+  exit 1
+elif [ "${check_version}" = "${our_version}" ] ; then
+    tell "Verifying install files..." 
+    md5sum --check --status ./md5sums/bblog-${our_version}
+    if [ "$?" -eq 1 ] ; then
+      tell "Something doesnt match Please re-download this version of BashBlogger"
+      exit 1
+    else
+      tell "Everything passes Continuing"
+    fi
+else
+    tell "Verifying existing ${check_version} install..." 
+    failed=`cd ${CONF_DIR} && md5sum --check ${OLDPWD}/md5sums/bblog-${check_version} 2>/dev/null | grep -v "open" | grep FAIL`
+    if [ ! -z "${failed}" ] ; then
+      tell "Something didnt match Please revert your local changes and run me again"
+      exit 1
+    else
+      tell "Everything passes Continuing"
+    fi
+fi
+}
+
+# migrate from pre-0.3.6 to 0.3.6 format
+migrate_entries() 
+{
+echo "$1"
+  if [[ "036" -eq "$1" ]]; then
+	echo "This shit is madness";
+  fi
+}

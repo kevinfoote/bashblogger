@@ -1,0 +1,46 @@
+This is an image-less, stylesheet *only* theme. You need to make a "theme"
+directory in the ROOTDIR of your site and copy this folder, in it's entirety,
+to the "theme" directory.  After that, just run bblog, select "5" for the
+Settings menu, then select "3" for "Change theme" and select the number beside
+"Badge" in the browser menu.  That's all there is to it. 
+
+Just so there's not confusion, here's an example assuming /var/www as the
+ROOTDIR:
+
+user@domain:/home/user/Desktop/bblog-0.3.6/Badge$ mkdir -p /var/www/theme
+user@domain:/home/user/Desktop/bblog-0.3.6/Badge$ cd .. && cp -R Badge /var/www/theme
+user@domain:/home/user/Desktop/bblog-0.3.6/$ bblog
+
+  +--------------------------------------------------------------+
+  | BashBlogger-0.3.6                                  Main Menu |
+  +--------------------------------------------------------------+
+  1.) Articles                         4.) Links
+  2.) Drafts                           5.) Settings
+  3.) Pages
+ 
+ 
+  Select [ 1 - 6 | x to exit ] : 5
+
+
+  +--------------------------------------------------------------+
+  | BashBlogger-0.3.6                                   Settings |
+  +--------------------------------------------------------------+
+  1.) Edit settings                   5.) Import RSS
+  2.) Edit CSS                        6.) Export RSS
+  3.) Change theme                    7.) Synchronize Remote
+  4.) Rebuild site
+ 
+ 
+  Select [ 1 - 7 | x to exit ] : 3
+
+
+  +--------------------------------------------------------------+
+  | BashBlogger-0.3.6                              Theme Manager |
+  +--------------------------------------------------------------+
+  1) Badge 
+
+  Select [ 1 - 1 | x to exit ] and hit enter : 1
+
+
+You can delete this README out of the directory (if you want).  It won't hurt
+anything to leave this README in the copied folder. 

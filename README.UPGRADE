@@ -1,0 +1,16 @@
+Upgrades
+--------
+
+Open a terminal and cd into this directory and type:
+
+./upgrade
+
+upgrade assumes that bash is located in /bin ( i.e. /bin/bash ). If the
+script fails to execute, you may need to edit it to point to bash on your
+system. `which bash` should give you a good idea if you're stumped.
+
+upgrade will examine your currently installed bashblogger, and will migrate all
+the files that have changed to the new format, making backup copies of the
+files first. Once copmlete, it will prompt for any new values that might have
+been introduced. If needed, it will also run 'bblog -r' to regenerate your
+site.

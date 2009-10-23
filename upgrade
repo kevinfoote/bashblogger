@@ -1,0 +1,91 @@
+#!/bin/bash
+
+source ./libbblog
+
+# Check to ensure that BashBlogger is already installed
+installed_bblog=`which bblog`
+if [[ ! -e $HOME/.bblog.conf || ! -d $HOME/.bashblogger || -z "$installed_bblog" ]] ; then
+  tell "You do not appear to have BashBlogger already installed!" clr
+  tell "Perhaps you want to run ./install instead"
+  exit 1
+fi
+
+# Make sure they want to upgrade :)
+tell "About to upgrade your install of BashBlogger" clr
+tell ""
+tell_nobr "Press CTRL-C now to abort. Any other key to continue: "
+read junk
+
+# Verify the download didn't flake or something
+verify_md5sum
+
+# Backup their stuff
+tell "You appear to be running version: ${installed_version}" clr
+tell "With bblog installed in: ${installed_bblog}"
+tell ""
+tell "Making a backup of this install in ${HOME}:"
+tar zcvf ${HOME}/bashblogger.${installed_version}.backup.tar.gz ${installed_bblog} ${HOME}/.bblog.conf ${CONF_DIR}
+tell ""
+
+# Build the new bblog.conf. Note that it will source the existing
+# one so that the user can just accept the defaults for any
+# existing items
+build_bblog_conf
+
+# Now, we know where they want rootdir to be, so set it up
+build_rootdir
+
+# Now, the pain
+# We need to upgrade conf_dir
+# We should also be aware of any changes they made locally
+# and bitch about that fact to the user
+
+# So, let's see if we can detect what they've changed
+tell "Attempting to determine if local changes were made" clr
+check_version ${installed_version}
+
+# So, we'll tackle the easy shit first ;)
+# We already know everything is 'stock' at this point
+# so here, we can install whatever doesn't need a migration
+# from old format to new format
+tell "Upgrading the components" clr
+for dir in archives drafts entries links pages templates user_templates
+do
+  install -v -d -m 0755 ${CONF_DIR}/${dir}
+done
+
+for dir in annual category daily monthly
+do
+  install -v -d -m 0755 ${CONF_DIR}/archives/${dir}
+done
+
+install -v -m 0644 ./configdir/bashblogger/libbblog ${CONF_DIR}/libbblog
+install -v -m 0644 ./configdir/bashblogger/quotes ${CONF_DIR}/quotes
+install -v -m 0644 ./configdir/bashblogger/sticky ${CONF_DIR}/sticky
+install -v -m 0644 ./configdir/bashblogger/update_services ${CONF_DIR}/update_services
+
+install -v -m 0644 ./configdir/bashblogger/archives/tlannual ${CONF_DIR}/archives
+
+/bin/rm ${CONF_DIR}/templates/*.tpl
+for tmplt in ./configdir/bashblogger/templates/*
+do
+  install -v -m 0644 ${tmplt} ${CONF_DIR}/templates/
+done
+
+# Check if the installed version is old enough to need migration
+if [ "${installed_version_nodots}" -lt "0360" ] ; then
+  tell "Migrating your blog data. This might take a while.." clr
+
+  # And now for the hard shit. Migration from old format to new format. Ugh
+
+  # Thankfully, master.db format hasn't changed :)
+  # If it did, we'd call: migrate_master_db 036
+
+  # Migrate the entries files
+  migrate_entries 036
+
+  tell "Please note that you will probably need to run 'bblog -r'" clr
+fi
+
+# We're outta here...
+congrats

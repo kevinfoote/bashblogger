@@ -1,0 +1,13 @@
+This script fetches the 'most recently listened to' list
+from Last.fm and displays it on your blog.
+
+To use:
+0) get a last.fm account (duh)
+1) create a new link category, Recently Listened To
+2) edit the script and replace the last.fm username
+3) add this script to your daily, hourly, whatever crontab
+
+To see a working example, check:
+http://doug.hunley.homeip.net/
+
+-- Doug <doug@hunley.homeip.net>

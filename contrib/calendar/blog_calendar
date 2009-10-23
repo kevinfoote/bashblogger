@@ -1,0 +1,34 @@
+#!/bin/bash
+
+source $HOME/.bblog.conf
+
+this_month=`date +%m`
+this_year=`date +%Y`
+this_day=`date +%d`
+
+# 'start' the file
+echo "<PRE>" > $CONF_DIR/calendar
+/usr/bin/cal $this_month $this_year >> $CONF_DIR/calendar
+
+# cycle through the days of the month so far and update
+# the calendar with URLs as needed
+for day in `seq 1 $this_day`
+do
+  day_cnt=`echo -n $day|wc -c`
+  if [ $day_cnt -eq 1 ] ; then
+    today="0${day}"
+  else
+    today="$day"
+  fi
+  if [ -d $ROOTDIR/archives/$this_year/$this_month/$today ] ; then
+    sed "s#\ ${day}\ #\ <a href=\"/archives/${this_year}/${this_month}/${today}/\">${day}</a> #" < $CONF_DIR/calendar | sed "s%\ ${day} %\ <a href=\"/archives/${this_year}/${this_month}/${today}/\">${day}</a>%" | sed "s#^${day}\ #<a href=\"/archives/${this_year}/${this_month}/${today}/\">${day}</a>#" > $CONF_DIR/calendar.new
+    mv $CONF_DIR/calendar.new $CONF_DIR/calendar
+  fi
+done
+
+# 'finish' the file and put it into place
+echo "</PRE>" >> $CONF_DIR/calendar
+mv $CONF_DIR/calendar $CONF_DIR/links/Calendar.lnk
+
+# rebuild the blog
+$HOME/bin/bblog -r

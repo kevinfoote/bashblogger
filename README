@@ -1,0 +1,116 @@
+ bblog-0.3.7 -  Bash Blogger, a shell script to maintain a personal
+ weblog.  Copyright (C) 2004-2006 Philip McClure.
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; version 2.
+
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ 
+ Installation 
+ ------------ 
+ There's directions on how to install bblog and get it running in the
+ INSTALL file.  Go read that, the rest of this is just drivel anyway.
+ 
+ Items of note
+ -------------
+ The Cascading Style Sheet (CSS) that controls the overall appearance
+ of your site must be edited through an option in the bblog program.
+ Bash Blogger will overwrite hand edited CSS files as the CSS are now
+ considered as part of a theme.
+
+ Bash Blogger themes are included as part of this tarball, 
+
+ If you have a theme you've created and would like to share with the
+ community, please consult the packaging directions at:
+
+	http://bashblogger.grimthing.com/theme_submission_guidelines/
+
+ If you're not familiar with editing CSS, there is an excellent
+ reference located at:
+		   
+	http://www.w3schools.com/css/css_reference.asp
+
+ The default favicon can be substituted with your own.  If you don't
+ have a favicon, there's an online favicon generator located at:
+
+	http://www.chami.com/html-kit/services/favicon/
+
+
+
+ Using bblog
+ -----------
+ Bash Blogger now has an upgrade path.  You can now Import/Export 
+ your entire site via one big honkin' RSS feed.  The RSS Import
+ function has been tested with Wordpress RSS feeds and 
+ Bash Blogger's own RSS feed, ymmv.
+ 
+ Also, there is now an update script, (contributed by Doug Hunley),
+ but it's not quite working this release.
+
+ Bash Blogger also has command-line support. `bblog -h' will give
+ a listing of all the available options.
+
+ The default operation is fairly straightforward (to me).  If you
+ don't think so, please email me with any suggestions or areas of
+ improvement at:
+
+	grim@grimthing.com
+
+ Include "bashblogger" (one word) somewhere in the subject line. 
+ This is important becase I have my spam filters wound a little
+ too tight and your email missive might not reach my inbox 
+ otherwise.  Thanks in advance for that.
+
+
+ Wiki
+ -----------
+ I've decided to repurpose the wiki for documentation on how to use
+ bashblogger.  That was my decision about a month ago and dangit
+ that's what I'm going to do with it.
+
+ Eventually. :)
+
+
+ Description 
+ ----------- 
+ bblog uses bash, vi, ls, cat, sed, head, tail, mv, cp, rm and mkdir
+ pushd, popd, curl and wc. The installer uses gnu tar and gzip, as 
+ well as, rm, install, sort, cut, tr, md5sum, touch, wc, head and 
+ tail.
+ 
+ These programs are standard on most Linux installations, so I am
+ confident that you will be able to use bblog as soon as you get
+ through reading this boring commentary.  I  assure you that reading
+ this passage cannot possibly be more boring than writing it.
+
+ bblog was inspired by Bowie J. Poag's microblogger (mb) project.
+ Whereas Bowie designed mb to use Server Side Includes(SSI) I wanted
+ bblog to generate static XHTML that could be used on any webserver
+ without the lengthy configuration of Apache, primarily because I'm
+ lazy.
+
+ bblog uses vi because it's fast over a network connection (which is
+ how I usually update my journal), it's very powerful, comes standard
+ on most *NIX installations and primarily because I'm a vi biggot.  
+ However, the editor can be changed in the config file bblog.conf, 
+ if you just _have_ to use pico, jed, nano, emacs, kate, gnotepad,
+ nedit, etc.
+ 
+ A token effort has been made towards making bashblogger portable.  
+ If your system runs the bash shell, you should be good to go. I work
+ on bashblogger on a Debian Etch box, the bashblogger site is run on
+ a FreeBSD box, and I test it every once in a while on Max OS X (Tiger).
+
+ It seems to run well everywhere I test it. ymmv.
+
+ E-mail: grim@grimthing.com 
+ Home project: http://bashblogger.grimthing.com/
+

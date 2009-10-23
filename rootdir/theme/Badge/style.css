@@ -1,0 +1,157 @@
+/*Badge*/
+
+html {margin:0;padding:0;border:0;}
+
+body {
+	background: #000;
+	color: #40E0D0;
+	margin: auto 40px 40px 400px;
+	font: normal medium 'Gill Sans', Optima, Verdana, sans-serif;
+/*	font: normal medium "Andale Mono", "Courier", "Courier New", sans-serif;*/ 
+	line-height: 180%;
+}
+
+h1#logo {
+	display: block;
+	width: 200px;
+	height: 400px;
+	position:absolute;
+	top: -20px;
+	left: 150px;
+	background-color: #046260;
+	color: #000;
+}
+
+h2#tagline {
+	display: block;
+	width: 200px;
+	position: absolute;
+	left: 150px;
+	font: small arial, helvetica, sans-serif;
+	top: 365px;
+	text-align: center;
+	color: #000;
+}
+
+a:link {
+	color: #40E0D0;
+}
+
+a:visited {
+	color: #047270;
+}
+
+a:hover {
+	color: #40E0D0;
+}
+
+#logo a {
+	color: #000;
+	text-decoration: none;
+	position: absolute;
+	display: block;
+	width: 200px;
+	bottom:20px;
+	font: bold x-large arial, helvetica, sans-serif;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.dateline {
+	text-align: right;
+}
+
+pre,label{line-height:125%;font-size:medium}
+pre {                         /* http://users.tkk.fi/~tkarvine/pre-wrap-css3-moz
+illa-opera-ie.html */
+ white-space: pre-wrap;       /* css-3 */
+ white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+ white-space: -pre-wrap;      /* Opera 4-6 */
+ white-space: -o-pre-wrap;    /* Opera 7 */
+ word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+.entry-title a,.tagcloud a,ins{text-decoration:none}
+address,cite{font-style:normal;margin-top:1em}
+img{border:0}
+
+.updated{float:right;font-variant:small-caps;font-weight:bold}
+.updated,.sig,.tags,.nav,#go,.delicious-tags{text-align:right;font-size:small}
+.split span{float:left}
+.hentry iframe{padding-left:50px;float:right}
+.hentry .nofloat iframe{padding:2em 0;float:none}
+blockquote {font-size: smaller;font-style: oblique;border-left: 1px dotted
+silver;margin-left: 1.5em;padding-left: 1.5em;text-align: justify;}
+#linklist {
+	position: absolute;
+	width: 200px;
+	top: 400px;
+	left: 150px;	
+}
+
+.LinkListTitle h4 {
+	display: block;
+	width: 200px;
+	height: 25px;
+	font: x-large bold arial, helvetica, sans-serif;
+	text-align: center;
+	text-transform: uppercase;
+        background-color: #046260;
+        color: #000;
+	margin: 5px auto 5px auto;
+}
+
+.LinkListTitle ul {
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+
+.LinkListTitle a {
+	display: block;
+	width: 196px;
+	text-align: justify;
+	text-decoration: none;
+	font: x-large bold arial, helvetica, sans-serif;
+	padding: 2px;
+}
+
+.LinkListTitle a:link {
+}
+
+.LinkListTitle a:visited {
+	color: #046260;
+}
+
+.LinkListTitle a:hover {
+	background-color: #40E0D0;
+	color: #000;
+}
+
+.LinkListTitle {
+	padding-bottom: 5px;
+}
+
+
+#footer {
+	clear: both;
+	padding-top: 20px;
+	font: xx-small arial, helvetica, sans-serif;
+}
+
+img.story {
+	float: left;
+	margin: 0 10px 10px 0;
+}
+
+p {
+	padding-bottom: 1.2em;
+}
+
+hr {
+	color: #40E0D0;
+	background-color: #40E0D0;
+	height: 1px;
+	border: 0;
+	width: 80%;
+	margin: 3.5em auto 4.5em auto;
+}

@@ -1,0 +1,176 @@
+/*coffee*/
+
+html{
+margin: 0;
+padding: 0;
+border: 0;
+}
+
+body{
+background: #fff;
+color: #000;
+font: 14px Verdana, Geneva , sans-serif;
+width: 600px;
+margin: 10px auto 10px auto;
+}
+
+a:link {
+color: #00f;
+text-decoration: underline;
+}
+
+a:visited {
+color: #000;
+text-decoration: none;
+}
+
+a:hover {
+color: #00f;
+text-decoration: underline;
+}
+
+a:active {
+text-decoration: none;
+}
+
+#logo {
+margin: 0;
+padding: 0;
+border: 0;
+}
+
+#logo h1{
+text-indent: -9999px;
+text-decoration: none;
+}
+
+#logo a{
+display: block;
+width: 600px;
+height: 300px;
+background: transparent url(theme/coffee/logo.jpg) top left no-repeat;
+text-indent: -9999px;
+text-decoration: none;
+}
+
+#tagline {
+text-indent: -9999px;
+margin-top: -20px;
+}
+
+#tagline h2{
+}  
+
+.updated{
+display: none;
+}
+
+.hentry{
+}
+
+
+.entry-title {
+font: 1.46em Georgia, serif;
+font-weight: normal;
+border-bottom: 1px solid #000;
+}
+
+.entry-title a {
+color: #00f;
+text-decoration: none;
+}
+
+.entry-content{
+width: 350px;
+border-right: #aaa dashed 2px;
+padding: 0 20px 10px 20px;
+margin-bottom: 10px;
+}
+
+.pentry-content{
+}
+
+
+p{
+text-align: left;
+margin: 0 0 1.8em 0;
+}
+
+#breadcrumbs {
+margin-bottom: 20px;
+}
+
+
+#linklist {
+position: absolute;
+top: 300px;
+width: 200px;
+margin-left: 400px;
+}
+
+div.LinkListTitle {
+border: 0;
+padding: 1.2em;
+margin-bottom: 1em;
+}
+
+div.LinkListTitle ul {
+list-style: none;
+margin: 0;
+padding: 0;
+}
+
+div.LinkListTitle li {
+}
+
+div.LinkListTitle ul li a:link, ul li a:visited {
+margin: 0;
+color: #00f;
+text-decoration: none;
+}
+
+div.LinkListTitle ul li a:hover {
+color: #00f;
+text-decoration: underline;
+margin: 0;
+}
+
+div.LinkListTitle h4 {
+font: 1.46em Georgia, serif;
+margin-bottom: 1em;
+padding: 0;
+border-bottom: 1px solid #000;
+}
+
+#blogrollmain li {
+margin: 0;
+}
+
+#footer{
+clear: both;
+text-align: center;
+font-size: .7em;
+}
+
+.dateline{
+border-top: 1px solid #000;
+font-size: .8em;
+text-align: right;
+}
+
+blockquote {
+margin: 10px;
+padding: 0;
+border-left: 2px dashed #aaa;
+}
+
+blockquote p {
+padding: 10px;
+}
+
+img.story {
+padding-right: 5px;
+margin: 0;
+border: 0;
+float: left;
+}

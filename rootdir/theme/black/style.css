@@ -1,0 +1,214 @@
+/*black*/
+
+html {
+background: #000 url(theme/black/n1.png) top left repeat-x;
+margin:0;
+padding:0;
+border:0;
+}
+
+body {
+width: 720px;
+margin: 70px auto 1em auto;
+font: 1em arial, helvetica, sans-serif;
+color: #fff;
+}
+
+.entry-content {
+width: 480px;
+float: left;
+border: 0;
+padding: 0;
+}
+
+.pentry-content {
+float: left;
+border: 0;
+padding: 0;
+}
+
+a:link {
+font-weight: 700;
+text-decoration: none;
+color: gray;
+}
+
+a:visited {
+font-weight: 700;
+text-decoration: none;
+color: #555;
+}
+
+a:hover {
+text-decoration: underline;
+}
+
+a:active {
+text-decoration: none;
+}
+
+#logo {
+font:bold 2.1em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+text-transform:uppercase;
+letter-spacing:.2em;
+margin: 0;
+padding: 0;
+border: 0;
+}
+
+#logo a{
+text-decoration: none;
+color: white;
+}
+
+#tagline {
+margin-top: -4px;
+margin-left: 0;
+line-height: 15px;
+padding: 0;
+border: 0;
+font:bold 78%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+text-transform:uppercase;
+letter-spacing:.4em;
+color: white;
+}
+
+h2, h3, h4{
+font:bold 78%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+text-transform:uppercase;
+letter-spacing:.2em;
+color: gray;
+}
+
+p{
+text-align: left;
+line-height: 180%;
+}
+
+#breadcrumbs {
+color: #fff;
+}
+
+.updated {
+display: none;
+}
+
+#linklist {
+width: 180px;
+margin-left: 500px;
+border: 0;
+padding: 0;
+}
+
+#linklist div.LinkListTitle {
+border-bottom: 1px solid #333;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+
+#linklist ul {
+padding-left: 5px;
+list-style-type: none;
+}
+
+#linklist li {
+margin:0;
+padding:0 0 .25em 15px;
+}
+
+#blogrollmain li {
+amrgin: 0;
+padding: 0 0 .25em 15px;
+}
+
+div.entry{
+margin: 10px;
+padding: 0;
+padding-bottom: 10px;
+padding-top: 10px;
+border-bottom: 1px solid #333;
+}
+
+div.entryheader{
+height: 35px;
+display: block;
+}
+
+#footer{
+clear: both;
+text-align: center;
+padding: 5px;
+font-size: 12px;
+}
+
+div.dateline{
+font: .8em arial, helvetica, sans-serif, italic;
+text-align: right;
+}
+
+#image{
+border: 0;
+padding: 0;
+width: 433px;
+margin-left: auto;
+margin-right: auto;
+}
+
+#playlist{
+width: 100%;
+padding: 0;
+border: 0;
+}
+
+#playlist a{
+margin-left: 5px;
+}
+
+img.story{
+border: 0;
+padding-right: .5em;
+padding-bottom: .5em;
+margin: 0;
+float: left;
+}
+
+fieldset{
+border: 1px solid #fff;
+padding: 5px;
+}
+
+#thumbnails {
+width: 450px;
+margin-left: auto;
+margin-right: auto;
+}
+
+#thumbnails a:hover {
+text-decoration: none;
+}
+
+#thumbnails img{
+width: 100px;
+height: 70px;
+border: 1px solid #000;
+margin: 2px;
+padding: 0;
+}
+
+div.strikethrough {
+text-decoration: line-through;
+}
+
+hr.separator {
+height: 1px;
+color: #333;
+padding: 0;
+margin: 0;
+border: 0;
+border-bottom: 1px solid #333;
+}
+
+.entry-title {
+font-size: 1.6em;
+font-weight: bold;
+}

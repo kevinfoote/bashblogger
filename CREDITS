@@ -1,0 +1,87 @@
+This is at least a partial credits-file of people that have
+contributed to Bash Blogger.  It is formatted in a way that 
+allows for easy grepping and beautification by scripts.  
+The fields are: name (N), email (E), web-address (W), 
+PGP key ID and fingerprint (P), description (D)
+and snail-mail address (S). 
+
+Thanks,
+Philip McClure
+		
+----------
+
+N: Serafeim Zanikolas
+E: Serafeim Zanikolas <serzan@hellug.gr>
+W: http://members.hellug.gr/serzan/blog/
+D: Permalinks and Archive hierarchy inspired by code submitted by 
+D: Serafeim Zanikolas
+
+N: Jesper R. Meyer
+E: Jesper R. Meyer <jrm@upthere.dk>
+W: http://upthere.dk/jrm/
+D: Mr.Meyer sent in the original patch to make Bash Blogger use
+D: the default SYSTEM editor instead of vi.
+
+N: Chris "Fury"
+E: Super User <usr@fury.techell.com>
+W: http://fury.techell.com/
+D: Chris helped debug the installer for 0.3.2
+
+N: Cody "The Destroyer" Hess
+E: Cody Hess <cody.hess@gmail.com>
+W: http://codythedestroyer.com/
+D: Mr.Hess helped beta test early verisons of Bash Blogger 
+D: for OSX users.
+
+N: doorsvie
+E: doorsvie <doorsvie@freeshell.org>
+W: http://doorsvie.freeshell.org/
+D: Doorsvie sent in a patch that corrected a problem with
+D: systems that used a non-GNU version of `ls'.
+
+N: Ben Ritter
+E: skape <skape@skapenews.com>
+W: http://skapenews.com/
+D: Mr.Ritter pointed out that the built-in autoformatting
+D: was mangling articles on edit.  This has been disabled
+D: until it can be fixed properly.  Mr.Ritter also solved
+D: a bug in the editing of pages.
+
+N: Matt Sakaluk
+E: msakaluk@sfu.ca
+D: Mr.Sakaluk found a problem with non-GNU versions of head
+D: as well as a problem with parsing the master.db on 
+D: non-GNU systems.
+
+N: Richard Harris
+E: goosequill@users.sourceforge.net
+W: http://goosequill.sourceforge.net
+D: Helping to make the bblog emacs-friendly.
+D: Preventing catastrophic deletion of entries.
+
+N: Nick Anderson
+E: nick <nick@anders0n.net>
+W: http://anders0n.net
+D: Original patch for remote synchronization
+D: Found article rename bug
+D: Found article remove bug
+
+N: Kevin P. Foote
+E: "Kevin P. Foote" <kevin@footefamily.net>
+W: http://kevin.footefamily.net
+D: Added aspell patch the negates weird command line
+D: options.  Very simple to spellcheck now.
+D: Also wrote new sed one-liner for importRSS() to 
+D: better discover RSS_URL.
+
+N: Douglas J Hunley
+E: Douglas J Hunley <doug@hunley.homeip.net>
+W: http://hunley.homeip.net
+D: Suggested and implemented `-r' commandline switch
+D: so site could rebuild from external script calls.
+
+N: Kurt Wall
+E: Kurt Wall <kwall@kurtwerks.com>
+W: http://www.kurtwerks.com
+D: Fixed bug with remote sync using the scp option.
+

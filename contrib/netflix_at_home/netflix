@@ -1,0 +1,27 @@
+#!/bin/bash
+
+source $HOME/.bblog.conf
+
+# First, we check if we're actively blogging and then bail out if we are
+# so as not to clobber ourselves
+if [ ! -e $CONF_DIR/blogging ] ; then
+	# We're not currently blogging, so we'll check Netflix and get
+	# the list of whatever movies we have currently
+        # CHANGEME: you need to use /your/ id, not mine :)
+	wget -q -O /tmp/netflix.rss http://rss.netflix.com/AtHomeRSS?id=P1616326728301489807349651663991330
+	$HOME/bin/parse_rss.pl /tmp/netflix.rss > /tmp/netflix.tmp
+	diff -q /tmp/netflix.tmp $HOME/.bashblogger/links/Currently_Watching.lnk &>/dev/null
+	if [ $? -eq 1 ] ; then
+		# just in case we started blogging between the first
+		# check and now
+		while [ -e $CONF_DIR/blogging ]
+		do
+			sleep 3
+		done
+		mv /tmp/netflix.tmp $HOME/.bashblogger/links/Currently_Watching.lnk
+	else
+		rm /tmp/netflix.tmp
+	fi
+
+        $HOME/bin/bblog -r &>/dev/null
+fi

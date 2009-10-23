@@ -1,0 +1,11 @@
+# Here is a list of some of the popular weblog update notification websites.
+# Uncomment which ones you'd like to use.  
+# If you'd like to ping a service that isn't listed below, you can add the URL
+# to that service's XML-RPC interface to the bottom of the list. 
+# Email grim@grimthing.com with services you'd like to see added to the list.
+# -------------------------------------------------------------------------- #
+# http://rpc.technorati.com/rpc/ping
+# http://www.syndic8.com/xmlrpc.php 
+# http://rpc.weblogs.com/RPC2
+# http://ping.feedburner.com
+# http://ping.blo.gs/ 

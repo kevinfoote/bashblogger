@@ -1,0 +1,64 @@
+#!/bin/bash
+
+source ./libbblog
+CONF_DIR="$HOME/.bashblogger"
+# Check if BashBlogger's files appear to already exist
+if [[ -e ${HOME}/.bblog.conf || -d ${HOME}/.bashblogger ]] ; then
+  tell "You appear to have BashBlogger installed already!" clear
+  tell "Perhaps you want to run ./upgrade instead"
+  exit 1
+fi
+
+# Verify the download didn't flake or something
+. ./libbblog
+verify_md5sum ${our_version}
+
+# Find a suitable path to install to
+. ./libbblog
+find_install_dir
+
+# Install bblog into the path found above
+tell "Installing bblog binary:" clear
+install -m 0755 ./bblog "${install_path}/bblog"
+
+# Install the default files into the BashBlogger config dir
+tell ""
+tell "Creating the BashBlogger config directory:"
+install -d -m 0755 "${CONF_DIR}"
+tell ""
+tell "Populating the BashBlogger config directory:"
+for i in archives drafts entries links pages templates user_templates
+do
+  install -d -m 0755 "${CONF_DIR}/${i}"
+done
+for i in categories master.db quotes sticky update_services
+do
+  install -m 0644 "./configdir/bashblogger/${i}" "${CONF_DIR}/${i}"
+done
+install -m 0644 "./configdir/bashblogger/libbblog" "$CONF_DIR"
+for i in annual category daily monthly
+do
+  install -d -m 0755 "${CONF_DIR}/archives/${i}"
+done
+install -m 0644 ./configdir/bashblogger/archives/tlannual "${CONF_DIR}/archives"
+for i in ./configdir/bashblogger/links/*
+do
+  install -v -m 0644 ${i} "${CONF_DIR}/links"
+done
+for i in ./configdir/bashblogger/templates/*
+do
+  install -v -m 0644 ${i} "${CONF_DIR}/templates"
+done
+
+# Create bblog.conf and then install it
+install -m 0644 "./configdir/bblog.conf" "${HOME}/.bblog.conf"
+. ./libbblog
+build_bblog_conf
+
+# Populate rootdir w/ the default files
+. ./libbblog
+build_rootdir
+
+# Congratulate user on install
+. ./libbblog
+congrats

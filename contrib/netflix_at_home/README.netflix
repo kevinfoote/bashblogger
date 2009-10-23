@@ -1,0 +1,17 @@
+This little tool grabs your 'Currently At Home' list
+of movies from Netflix and makes the list a part
+of your blog.
+
+To use:
+0) get a Netflix account (duh) and 'rent' some movies
+1) Create a 'Currently Watching' link box on your blog
+2) edit the netflix script and replace my Netflix id 
+   w/ your id
+3) put the perl script somewhere in your path, adjust
+   the netflix script accordingly
+4) put the netflix script into your daily crontab
+
+To see a working example of this script, check:
+http://doug.hunley.homeip.net/
+
+-- Doug <doug@hunley.homeip.net>

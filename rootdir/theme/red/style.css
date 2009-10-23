@@ -1,0 +1,121 @@
+/*red*/
+
+html {
+	padding: 0;
+	border: 0;
+	margin: 0;
+}
+
+body {
+	font: 1em "Trebuchet MS", sans-serif;
+	color: #7a7a7a;
+	margin: 2.5em 3em 0 3em;
+}
+
+a {
+	color: #AF0A0A;
+	text-decoration: none;
+}
+
+a:visited {
+	color: #7a7a7a;
+	text-decoration: none;
+}
+
+a:hover {
+	color: #AF0A0A;
+	text-decoration: underline;
+}
+
+#logo
+{
+	padding: 0em 1.5em 0em .5em;
+	height: 3em;
+	width: 5em;
+	float: left;
+	position: relative;
+	background: #AF0A0A url('theme/red/a1.gif') top right no-repeat;
+	margin: 0;
+}
+
+h1#logo a {
+	position: absolute;
+	bottom: 1.2em;
+	font-size: .5em;
+	color: #fff;
+	text-decoration: none;
+	letter-spacing: 0.1em;	
+}
+
+h2#tagline {
+	position: absolute;
+	top: 9.5em;
+	left: 4.2em;
+	font-size: .7em;
+	color: #fff;
+	padding-left: 1.5em;
+}
+
+#hentry, .entry-content {
+	margin-left: 14em;
+	padding-left: 2em;
+	border-left: 1px solid #cacaca;
+	padding-bottom: 4em;
+}
+
+.pentry-content {
+	margin-top: 4em;
+	padding-bottom: 4em;
+}
+
+#breadcrumbs {
+	padding-top: 8em;
+	text-align: right;
+}
+
+.updated{float:right;font-variant:small-caps;font-weight:bold}
+.updated,.sig,.tags,.nav,#go,.delicious-tags{text-align:right;font-size:small}
+
+.dateline {
+	font-size: small;
+	text-align: right;
+}
+
+#linklist {
+	position: absolute;
+	top: 8.5em;
+	width: 12em;
+	border: 0;
+	padding-left: 1em;
+	background: url(theme/red/a2.gif) top right repeat-y;
+}
+
+.LinkListTitle h4 {
+	border-bottom: 1px solid #cacaca;
+}
+
+.LinkListTitle ul {
+        list-style: none;
+        margin: 0;
+        padding: 0 0 1em .5em;
+}
+
+#footer {
+	clear: both;
+	text-align: center;
+	font-size: x-small;
+	margin: 0;
+	padding: 1em;
+	border-top: 1px dotted #cacaca;
+}
+
+blockquote {
+	border-left: solid 0.8em #cacaca;
+	padding: 0.5em 0em 0.5em 1.0em;
+	margin-bottom: 1.5em;
+	line-height: 1.6em;
+}
+
+blockquote p {
+	display: inline;
+}

@@ -1,0 +1,89 @@
+NAME
+  bblog - a small, Bash-powered weblog engine
+SYNOPSIS
+  bblog [ -hvaelrp] [ -t "title"]
+        [ -f /path/to/text ] [ -c "category" ]
+        [ -u http://link.uri/ ] [ -s "stylesheet" ]
+        [ -i /path/to/rss.xml ]
+DESCRIPTION
+  bblog is a small, Bash-powered weblog engine. It creates a static Web site that is fully CSS-styled and standards compliant (currently HTML 5). bblog also optionally supports many ping services (like Technorati, blogs.us). bblog is invoked on the command line in either an interactive or non-interactive fashion and creates a local blog entry which can then, optionally, be synchronized to your remote web server.
+
+OPTIONS
+  -h    Display the usage (help)
+  -v    Display the version
+  -a    Specifies an article. Used in conjunction with -t and -c for
+        interactive post. Additionally used with -f for non-interactive
+        post. If no flags are specified, lists available article
+        categories. See Examples
+  -e    Specifies an article to edit. Expects 14 digit ARTICLE_ID as
+        argument. See Examples
+  -l    Specifies a link. Used in conjuction with -t, -c and -u. See Examples
+  -r    Forces bblog to rebuild the entire site, including archives. Might
+        take some time depending on the size and history of your blog.
+  -p    Specifies a page. Used in conjunction with -t and, optionally,
+        -f. See Examples
+  -t    Specifies a title. Used in conjunction with -a, -p and -l. See Examples
+  -f    /path/to/text. Used in conjunction with -a and -p.
+  -c    Specifies a category. Used in conjunction with -a and -l.
+  -u    Specifies a URL. Used in conjunction with -l. 
+  -s    Opens current theme's stylesheet in the EDITOR specified in
+        .bblog.conf. Returns control to shell when finished editing.
+  -i    /path/to/rss.xml. Starts bblog with the given RSS formatted XML
+        file and imports the data in the file into your blog. Use this to
+        import from other blogs, or when upgrading bblog.
+
+EXAMPLES
+  bblog -a
+
+  Will list available article categories
+
+  bblog -a -t "Robots are awesome"
+
+  Will start an interactive article post with the title "Robots are awesome"
+
+  bblog -a -t "Robots are awesome" -c "Legos"
+
+  Will start an interactive article post with the title "Robots are awesome"
+  under the "Legos" category
+
+  bblog -a -t "Robots are awesome" -c "Legos" -f /home/optimus/lego_robots.txt
+
+  Will post, non-interactively, an article with the title "Robots are
+  awesome" under the "Legos" category with "/home/optimus/lego_robots.txt"
+  as the body of the post
+
+  bblog -e
+
+  Will list the last 10 articles in the format "ARTICLE_ID<tab>TITLE"
+
+  bblog -e 20060824235008
+
+  Will edit article with ARTICLE_ID of 20060824235008
+
+  bblog -l
+
+  Will list available link categories
+
+  bblog -l -t "bblog" -c "General" -u "http://bashblogger.grimthing.com/"
+
+  Will create a link called "bblog" in the "General" sidebox with an URL
+  of http://bashblogger.grimthing.com
+
+  bblog -p -t "Phil's Rockwell Hardness Reference"
+
+  Will open a page titled "Phil's Rockwell Hardness Reference" for
+  editing if article alread exists. Creates article if it doesn't
+  already exist, sets the title to "Phil's Rockwell Hardness Reference"
+  and loads the article in the editor.
+
+  bblog -p -t "Phil's Reference" -f /home/optimus/reference.txt
+
+  Will open a page titled "Phil's Reference" with the file
+  /home/optimus/rockwell_reference.txt as the body of the post
+SEE ALSO
+  http://bashblogger.grimthing.com/
+BUGS
+  None that we know of.
+AUTHOR
+  Philip McClure <grim@grimthing.com>
+

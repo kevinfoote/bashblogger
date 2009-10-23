@@ -1,0 +1,257 @@
+CHANGELOG
+------------
+
+October 25, 2007 bblog-0.3.7
+* Removed annoying startup draft reminder.  Added draft count to
+  main menu instead.
+* Removed blogrolling.com code.  blogrolling.com code can easily be
+  added via user sidebox
+* Fixed line 543 bad substitution error and suppressed more
+  instances of Pages.lnk and Pages2.lnk error
+* Added unsupported user scripts to tarball under contrib/.
+  Currently contains last.fm, netflix and calendar scripts
+  contributed by Doug Hunley.  Check README.contrib for more info.
+* Fixed the foo bug. The menubanner function created a file 'foo',
+  used to generate the interactive menu banners. File will now be
+  written to $CONF_DIR.  (Sorry again, Doug)
+* importRSS should now be working.  Removed \/ from a sed expression
+  and imported Doug's RSS feed locally.
+* Added man page. it's rough, but it's usable.
+* Removed CONFIG_DIR.tar.gz and added configdir w/ it's contents.
+  adjusted bblog_setup accordingly
+* Removed ROOTDIR.tar.gz and created rootdir/ with it's contents.
+  Modified bblog_setup to reflect this
+* Reworked toplevelarchives() and monthlyarchives().  Added
+  dailyarchives().
+* Updated several templates and added two directories and a file to
+  $ARCHIVES.
+* Added code to create lockfile, remove it on exit, warn if its
+  there on startup
+* Made installation of favicon.ico conditional on there already
+  being one there or not
+* Installer md5sums package to make sure nothing went crazy during
+  download.
+* Added user_templates to $CONF_DIR.  Upgrades shouldn't clobber
+  user created templates, bblog will check for user templates before
+  using included templates.
+* Categories side box now available through option in bblog.conf
+
+--------------------------------------------------------------------
+
+July 27, 2007 bblog-0.3.6
+* No more bug reports.  Posting the tarball to the site for wider 
+  consumption.
+
+--------------------------------------------------------------------
+
+July 23, 2007 bblog-0.3.6-RCFinal
+* Worked out miscellaneous bugs with the templates and several nasty
+  bugs with rebuildlinks()
+* Added pingservices() which will ping update services like 
+  technorati, blo.gs, etc. upon writing a new article.  Specify
+  which services you want to notify by uncommenting them in 
+  $CONF_DIR/update_services
+* Added pingback() to automagically notify other pingback-enabled
+  websites when you're talking about them.
+  * No plans on supporting trackbacks due to the fact that the whole
+    trackback auto-discovery mechanisim is brain-dead.
+* Kevin Foote found a better method to pull RSS_URL in the importRSS
+  function.
+* Douglas Hunley suggested a commandline switch for rebuildsite(). It
+  now shows up under usage and can be called by `bblog -r'.
+
+--------------------------------------------------------------------
+
+July 13, 2007 bblog-0.3.6-RC1
+* Please allow me to apologize on the slacking of development.  My
+  daughter will be 11 months old this month, and between her and
+  work, it's all I can do to get anything else done.
+	* Stripped all HTML out of bblog script except for the 
+	  rebuildlinks() function. (Too many conditionals.  I'm
+	  working on it.)
+	* Moved from XHTML 1.1 to HTML5 as per WHATWG 
+	  recommendations.
+	* Templates are now fully user-exposed:
+	 	 ~/.bashblogger/templates
+	* Kevin P. Foote submitted a Spell Checker function. It
+	  can be found under the Article Manager.
+	* The Welcome message crap is gone.  Instead, you can now
+	  make an article "sticky".  Pick an entry you want to make 
+	  "sticky", and it'll stay stuck to the top of the main 
+	  page, just like the welcome message used to do.
+	* Still working on trackbacks and pinging update services
+	  ala Technorati, blogs.us, etc. (should be in RC2).
+
+--------------------------------------------------------------------
+
+
+October 3, 2006 bblog-0.3.5
+* Nick Anderson submitted two bugs
+	* When I change the name of an article and rebuild the site
+	  the name change only changes in the bash blogger menu. The 
+	  index/article etc ... still list the original title.
+	  FIXED
+	* If you attempt to delete an article and fail to confirm 
+	  with Y/n (just press enter) bblog exits instead of 
+	  returning to previous menu. FIXED
+
+--------------------------------------------------------------------
+
+September 9, 2006 bblog-0.3.5-RC2
+* Nick Anderson submitted a remote synchronization function that 
+  seems to work quite well.
+
+--------------------------------------------------------------------
+
+August 25, 2006 bblog-0.3.5-RC1
+* I would like to have accurate dates reflecting when the following
+  changes were made, but, my wife and I are having a baby next month
+  and my priorities have been elsewhere.  I pray you all understand.
+
+  New to this release:
+  	* User side-boxes
+	* RSS2.0 feed (RSS1.0 is now deprecated)
+	* Import/Export site via RSS2.0 feed
+	* One-stop site rebuild
+	* (rudimentary) Podcasting support
+	* (rudimentary) template support
+	* rough draft support
+	* Multiple categories per post
+	* Autoformatting is now an option 
+
+
+--------------------------------------------------------------------
+
+June 20, 2005 bblog-0.3.4.3
+* Ben Ritter discovered that editing exisiting pages caused spaces in
+  the title to be replaced with underscores.  Mr.Ritter also
+  discovered that the built-in autoformatting mangled articles on
+  edit.  Autoformatting has been disabled until a safe fix can be
+  found.
+
+June 29, 2005 bblog-0.3.4.3
+* Matt Sakaluk discovered that head -n0 gives errors on non-GNU
+  versions and provided a fix.  Mr. Sakaluk also found that blank
+  lines were being prepended to the top or appended to the bottom of
+  the master.db if the article being edited was either the first or
+  last in the file and also sent in a fix for that as well.
+
+--------------------------------------------------------------------
+
+April 21, 2005 bblog-0.3.4.2
+* Fixed the bblog_setup script to add the path to the CONF_DIR in
+  ~/.bblog.conf.
+
+--------------------------------------------------------------------
+
+April 16, 2005 bblog-0.3.4.1
+* Made corrections to the CATEGORYARCHIVES & TOPLEVELARCHIVES 
+  functions in order to fix a bug for categories with spaces
+  in its name.
+
+--------------------------------------------------------------------
+
+April 11, 2005 bblog-0.3.4
+* Added Cool URI support that can be turned on or off from the 
+  config file
+* Added generic category support
+  - articles by category
+  - archives by category
+* Removed themes from installation tarball and made them into
+  downloadable theme packs
+* Removed formatting in the editing view from:
+  - Articles
+  - Welcome
+  - Pages
+* Added "breadcrumb navigation" hints
+
+November 11, 2004 bblog-0.3.4
+* Added stand-alone page creation tool
+* Added central database and reworked most of the functions to use 
+  the new .db.  This involved changing the filenames and formats of 
+  the files in .entries, again.
+* Added flags so that bblog can be used from the command-line,
+  e.g bblog -a -t "My new article" -f /home/user/file.txt
+  will generate a new article titled "My new article" and the body
+  of the article will be taken from the existing file 
+  /home/user/file.txt.
+
+--------------------------------------------------------------------
+
+October 10, 2004 bblog-0.3.3
+
+* Problem with non-GNU versions of `ls' fixed from a patch
+  submitted by doorsvie.
+* Edit and Remove submenus reworked to page through entries from 
+  newest to oldest, ten entries at a time.
+* Archive and Index generation changed to work on file creation time
+  instead of system modification time.  This was accomplished by 
+  modifying the filenames of the bits in the .entries directory.
+
+  Existing entries will have to be updated by hand, new entries are
+  automatically gnerated in the new format.
+
+--------------------------------------------------------------------
+
+September 26, 2004 bblog-0.3.3
+
+* Implemented Blogroll support
+* Fixed a couple of annoying menu bugs
+* Moved bblog.conf to ~/.bblog.conf
+* Added options for local and system-wide install
+* Cleaned up root directory
+* Rewrote bblog to be called from anywhere in the users $PATH for a
+  system-wide install
+* Some code clean-up
+
+--------------------------------------------------------------------
+
+September 6, 2004 bblog-0.3.2
+
+* Added RSS 1.0 feed generator
+* New settings in bblog.conf
+
+--------------------------------------------------------------------
+
+September 4, 2004 bblog-0.3.2
+
+* Further improved permalink functionality.  Archives are tied into
+  the permalink function now allowing the user to add, edit and 
+  remove entries while the archives update themselves automagically.
+* Moved user settings into a central config file (bblog.conf) 
+  editable from withing the menu.
+* Added a link manager to add, edit, remove and organize the sidebar
+  linklist.
+* Added a theme switcher to allow simple switching of site layouts 
+  from within the menu.  Stylesheets should be edited in the menu
+  to prevent Bash Blogger from overwriting changes as the stylsheets
+  are considered a part of the theme now.
+* New default CSS template.
+
+---------------------------------------------------------------------
+
+June 20, 2004 bblog-0.3.1
+
+* Used some code submitted by Serafeim Zanikolas to implement
+  permalinks and an archive hierarchy.
+* New default CSS template, "arachne".
+  
+----------------------------------------------------------------------
+
+June 20, 2004 bblog-0.3
+
+* Changed dependancy on vi to default to system EDITOR per 
+  Jesper R. Meyer
+* Fixed display bug on Mac IE5.  Comments between text in template was
+  displaying the contents of the H1 element instead of hiding it in
+  CSS capable browsers.
+
+----------------------------------------------------------------------
+
+June 18, 2004 bblog-0.2
+
+* Removed dependancy on the command-line calculator, bc.
+* Added a (questionably) more attractive default CSS template.
+* Added a sidebar linklist.
+* Added a static "Welcome" message.
+* Cleaned up the interface and grouped the selections by category.

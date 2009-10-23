@@ -1,0 +1,9 @@
+TODO
+----------
+
+* moblog support via procmail (have posting via email tenatively 
+  working in 0.3.7)
+* multiple enclosures (does anybody really need this?)
+* atom feed (plugin?)
+* Teaser entries on the front page (user configurable option in
+  .bblog.conf)

@@ -1,0 +1,2606 @@
+#!/bin/bash
+
+################################################################
+##                           MENUS                            ##
+################################################################
+
+menu()
+{
+clear
+draft_count=`ls $CONF_DIR/drafts | wc -l | awk '{ print $1 }'`
+if [ "$draft_count" -lt 1 ]; then
+	DC="                          "
+elif [ "$draft_count" -le 9 ]; then
+	DC="($draft_count)                       "
+elif [ "$draft_count" -gt 9 ]; then
+	DC="($draft_count)                      "
+fi
+OPTION="";
+btitle="Main Menu"
+menubanner
+echo "  1.) Articles                         4.) Links";
+echo "  2.) Drafts ${DC}5.) Settings";
+echo "  3.) Pages";
+echo -e " \n ";
+echo -n "  Select [ 1 - 5 | x to exit ] : "; read -n1 OPTION
+
+case "$OPTION" in
+1 ) articlemanager ;;
+2 ) draftmanager ;;
+3 ) pagemanager ;;
+4 ) linksmanager ;;
+5 ) settingsmanager ;;
+[Xx] ) clear; flee 0 ;;
+* ) clear 
+echo "";;
+esac
+clear
+}
+
+articlemanager()
+{
+while true 
+do
+clear
+OPTION="";
+btitle="Article Manager"
+menubanner
+echo "  1.) Write a new article             6.) Create new category";
+echo "  2.) Edit an existing article        7.) Modify article category";
+echo "  3.) Delete an article               8.) Rename article";
+echo "  4.) Make article sticky             9.) Spell-Check article";
+echo "  5.) Make article unsticky";
+echo -e " \n "; 
+echo -n "  Select [ 1 - 9 | x to exit ] : "; read -n1 OPTION
+
+case $OPTION in
+1 ) writearticle ;;
+2 ) modifyarticle ;;
+3 ) removearticle ;;
+4 ) stickyarticle ;;
+5 ) unstickyarticle ;;
+6 ) articlecat ;;
+7 ) modarticlecat ;;
+8 ) renamearticle ;;
+9 ) spchkarticle ;;
+[Xx] ) return ;;
+* ) clear ;;
+esac
+clear
+done
+}
+
+settingsmanager()
+{
+while true
+do
+clear
+OPTION=""
+btitle="Settings"
+menubanner
+echo "  1.) Edit settings                   5.) Import RSS";
+echo "  2.) Edit CSS                        6.) Export RSS";
+echo "  3.) Change theme                    7.) Synchronize Remote";
+echo "  4.) Rebuild site";
+echo -e " \n ";
+echo -n "  Select [ 1 - 7 | x to exit ] : "; read -n1 OPTION
+
+case $OPTION in
+1 ) editconfig ;;
+2 ) editstylesheet ;;
+3 ) thememanager ;;
+4 ) clear;
+    rebuildsite ;;
+5 ) importRSS ;;
+6 ) clear;
+    echo -n "  This might take a minute...";
+    articlecount=`wc -l $MASTER_DB | awk '{ print $1 }'`;
+    SITENAME_NO_SPACES=`echo $SITENAME | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g"`
+    whereami=`pwd`;
+    outfile="$whereami/${SITENAME_NO_SPACES}.xml";
+    generateRSS "$articlecount" "$outfile";
+    echo "DONE"
+    echo -n "  Site was exported to $outfile";
+    sleep 3
+    ;;
+7 ) synchronizesite ;;
+[Xx] ) return ;;
+* ) clear ;;
+esac
+clear
+done
+}
+
+linksmanager()
+{
+while true 
+do
+clear
+OPTION="";
+btitle="Links Manager"
+menubanner
+echo "  1.) Add links                  4.) Change category order";
+echo "  2.) Edit links                 5.) Delete category";
+echo "  3.) Add category               6.) Add User Sidebox";
+echo -e " \n ";
+echo -n "  Select [ 1 - 6 | x to exit ] : "; read -n1 OPTION
+
+case $OPTION in
+1 ) addlinks ;;
+2 ) editlinks ;;
+3 ) newcategory ;;
+4 ) catorder ;;
+5 ) removecategory ;;
+6 ) usersidebox ;;
+[Xx] ) return ;;
+* ) clear ;;
+esac
+clear
+done
+}
+
+pagemanager()
+{
+while true 
+do
+clear
+OPTION="";
+btitle="Page Manager"
+menubanner
+echo "  1.) Add page";
+echo "  2.) Edit page";
+echo "  3.) Delete page";
+echo -e " \n ";
+echo -n "  Select [ 1 - 3 | x to exit ] : "; read -n1 OPTION
+
+case $OPTION in
+1 ) addpage ;;
+2 ) editpage ;;
+3 ) removepage ;;
+[Xx] ) return ;;
+* ) clear ;;
+esac
+clear
+done
+}
+
+################################################################
+##                     Article Functions                      ##
+################################################################
+
+writearticle()
+{
+clear
+echo "";
+echo -n "  Enter a title for your new article and hit enter : "; read TITLE
+if [[ -z "$TITLE" ]]; then
+return
+fi
+FILE="$CONF_DIR/scratch"
+echo -n "  Hit \"enter\" and start writing..."; read -n1 HITME
+quickwrite
+}
+
+modifyarticle()
+{
+clear
+entrytotal=`wc -l $MASTER_DB | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Modify Article"
+menubanner
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		echo "  $x) `head -n$x $MASTER_DB | tail -n1 | cut -f2`";
+	fi
+x=$(( $x-1))
+done
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+EDIT=`head -n$MODIFY $MASTER_DB | tail -n1 | cut -f1`
+quickedit
+}
+
+removearticle()
+{
+clear
+entrytotal=`wc -l $MASTER_DB | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Remove Article"
+menubanner
+
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		echo "  $x) `head -n$x $MASTER_DB | tail -n1 | cut -f2`";
+	fi
+x=$(( $x-1))
+done
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+clear
+ARTICLE_ID=`head -n$MODIFY $MASTER_DB | tail -n1 | cut -f1`
+FILE2RM=$ENTRIES/$ARTICLE_ID
+META=`head -n1 $FILE2RM | tail -n1`
+splitbits "$META"
+echo -n "  Are you sure you want to delete \"$TITLE\"? (Y/n):"; read CHOICE
+case $CHOICE in
+n | N ) return;; 
+* ) echo ;;
+esac
+sed "/$ARTICLE_ID/d" "$ARCHIVES/monthly/$YEAR-$MONTH" | sed -e '/^$/d' > "$ARCHIVES/monthly/$YEAR-$MONTH.tmp"
+mv "$ARCHIVES/monthly/$YEAR-$MONTH.tmp" "$ARCHIVES/monthly/$YEAR-$MONTH"
+sed "/$ARTICLE_ID/d" "$ARCHIVES/daily/$YEAR-$MONTH-$DAY" | sed -e '/^$/d' > "$ARCHIVES/monthly/$YEAR-$MONTH-$DAY.tmp"
+mv "$ARCHIVES/daily/$YEAR-$MONTH-$DAY.tmp" "$ARCHIVES/daily/$YEAR-$MONTH-$DAY"
+
+catcount=`wc -l $CATEGORIES | awk '{ print $1 }'`
+if [ "$catcount" -eq 1 ]; 
+	then
+		CATEGORY=`cat $CATEGORIES`
+		sed "/$ARTICLE_ID/d" "$ARCHIVES/category/$CATEGORY" | sed -e '/^$/d' > "$ARCHIVES/category/$CATEGORY.tmp"
+		mv "$ARCHIVES/category/$CATEGORY.tmp" "$ARCHIVES/category/$CATEGORY"
+	else
+		count=$catcount
+		while [ "$count" -gt 0 ]; do
+			category=`head -n$count $CATEGORIES | tail -n1`
+			sed "/$ARTICLE_ID/d" "$ARCHIVES/category/$category" | sed -e '/^$/d' > "$ARCHIVES/category/$category.tmp"
+			mv "$ARCHIVES/category/$category.tmp" "$ARCHIVES/category/$category"
+			count=$(( $count-1 ))
+		done
+fi
+
+sed "/$ARTICLE_ID/d" $MASTER_DB | sed -e '/^$/d' > $MASTER_DB.tmp
+mv $MASTER_DB.tmp $MASTER_DB
+rm $FILE2RM 
+rm -rf $ROOTDIR/$PERMAPATH
+recententries
+catsidebar
+addsearch
+addquote
+rebuildindex
+updatearchives
+if [ "$RSS" -eq 1 ];then
+	generateRSS "$RSS_MAXENTRIES" "$ROOTDIR/index.xml"
+fi
+}
+
+stickyarticle()
+{
+clear
+entrytotal=`wc -l $MASTER_DB | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Make Article Sticky"
+menubanner
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		echo "  $x) `head -n$x $MASTER_DB | tail -n1 | cut -f2`";
+	fi
+x=$(( $x-1))
+done
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+ARTICLE_ID=`head -n$MODIFY $MASTER_DB | tail -n1 | cut -f1`
+s_target="$CONF_DIR/sticky"
+META=`head -n1 $ENTRIES/$ARTICLE_ID | tail -n1`
+splitbits "$META"
+CONTENT=`sed "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID`
+CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | head -n${catcount}` 
+sticky_tmp=$CONF_DIR/sticky.tmp
+touch $sticky_tmp
+if [ "$catcount" -eq 1 ]; then
+        thiscat=$CATEGORY
+        find_template Misc.tpl
+        multi_cat=$multicat
+else
+        abc=0
+        xyz=1
+        while [ "$xyz" -le "$catcount" ]; do
+                thiscat=`echo "$CATEGORY" | head -n$xyz | tail -n1`
+                find_template Misc.tpl
+                echo "$multicat" >> $sticky_tmp 
+                abc=$(( $abc+1 ));
+                xyz=$(( $xyz+1 ));
+        done
+multi_cat=`cat $sticky_tmp`
+fi
+rm $sticky_tmp
+find_template ENTRY.tpl
+echo "$article_entry" > $s_target 
+rebuildindex
+}
+
+unstickyarticle()
+{
+clear
+rm -f "$CONF_DIR/sticky"
+touch "$CONF_DIR/sticky"
+rebuildindex
+}
+
+renamearticle()
+{
+clear
+entrytotal=`wc -l $MASTER_DB | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Rename Article"
+menubanner
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		echo "  $x) `head -n$x $MASTER_DB | tail -n1 | cut -f2`";
+	fi
+x=$(( $x-1))
+done
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+clear
+echo -n "  Type out the new title and hit enter : "; read newname
+topnum=$(( $MODIFY-1 ))
+bottomnum=$(( $entrytotal-$MODIFY ))
+
+if [ "$topnum" -gt "0" ];
+then
+        top=`head -n$topnum $MASTER_DB`
+fi
+
+bottom=`tail -n$bottomnum $MASTER_DB`
+line2rename=`head -n$MODIFY $MASTER_DB | tail -n1`
+string2rename=`head -n$MODIFY $MASTER_DB | tail -n1 | cut -f2`
+subFILE2EDIT=`head -n$MODIFY $MASTER_DB | tail -n1 | cut -f1`
+NEWTITLE=`echo "$line2rename" | sed "s/$string2rename/$newname/"`
+subtarget=$MASTER_DB.tmp
+target=$MASTER_DB
+######################################################
+## The two added if statements prevent the bug where##
+## blanks lines were added to master.db if the      ##
+## article being edited was either the first or last.#
+## -Matt Sakaluk                                    ##
+if [ "$topnum" -gt "0" ];
+then
+	echo "$top" > $subtarget
+fi
+
+echo "$NEWTITLE" >> $subtarget
+
+if [ "$bottomnum" -gt "0" ];
+then
+	echo "$bottom" >> $subtarget
+fi
+##                                                  ##
+######################################################
+
+mv $subtarget $target
+FILE2EDIT="$ENTRIES/$subFILE2EDIT";
+META=`head -n1 $FILE2EDIT | tail -n1`
+splitbits "$META"
+sed -n "1,${cutmeta}p" "$FILE2EDIT"> $FILE2EDIT.meta
+sed "1,${cutmeta}d" "$FILE2EDIT"  > $FILE2EDIT.tmp
+oldtitle=`head -n1 $FILE2EDIT.meta | cut -f1`
+new_title=`echo "$NEWTITLE" | cut -f2`
+sed "s/$oldtitle/$new_title/" < $FILE2EDIT.meta > $FILE2EDIT.new
+cat $FILE2EDIT.new > $FILE2EDIT
+cat $FILE2EDIT.tmp >> $FILE2EDIT
+rm $FILE2EDIT.meta $FILE2EDIT.tmp $FILE2EDIT.new
+META=`head -n1 $FILE2EDIT| tail -n1`
+splitbits "$META"
+ARTICLE_ID="$subFILE2EDIT"
+updatepermalink
+rebuildindex
+updatearchives
+clear
+}
+
+
+draftmanager()
+{
+clear
+entrytotal=`ls $CONF_DIR/drafts/* | wc -l | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Modify Draft"
+menubanner
+if [[ "$entrytotal" -eq "0" ]];then
+	echo "";
+	echo "                     You have no drafts to modify.                 " 
+	sleep 3
+	return
+else	
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		a=`ls $CONF_DIR/drafts | head -n$x | tail -n1`
+		echo "  $x) `head -n1 $CONF_DIR/drafts/$a | tail -n1 | cut -f1`";
+	fi
+x=$(( $x-1))
+done
+fi
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+GET_ARTICLE_ID=`ls $CONF_DIR/drafts | head -n$MODIFY | tail -n1`
+FILE2EDIT=$CONF_DIR/drafts/$GET_ARTICLE_ID
+TITLE=`head -n1 $FILE2EDIT | tail -n1`
+FILE="$CONF_DIR/drafts/edit.tmp"
+sed '1d' "$FILE2EDIT" > $FILE
+edit $FILE
+clear
+echo -n " Post to site? (Y/n) :"; read CHOICE
+
+case $CHOICE in
+n | N ) echo "$TITLE" > $FILE2EDIT;
+	cat "$FILE" >> $FILE2EDIT;
+	rm $FILE;
+	return;;
+* ) echo -e "\n Good..." ;;
+esac
+DRAFT="1"
+CONTENT=`cat "$FILE"`
+quickwrite
+rm $FILE $FILE2EDIT
+}
+
+
+
+modarticlecat()
+{
+clear
+entrytotal=`wc -l $MASTER_DB | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Modify Article Category"
+menubanner
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		echo "  $x) `head -n$x $MASTER_DB | tail -n1 | cut -f2`";
+	fi
+x=$(( $x-1))
+done
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+ARTICLE_ID=`head -n$MODIFY $MASTER_DB | tail -n1 | cut -f1`
+META=`head -n1 $ENTRIES/$ARTICLE_ID | tail -n1`
+splitbits "$META"
+ENCLOSURE=`sed '1d' $ENTRIES/$ARTICLE_ID | head -n1 | tail -n1`
+CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | sed -n "1,${catcount}p"`
+CONTENT=`sed "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID`
+clear
+target="$CONF_DIR/category.tmp"
+target2="$CONF_DIR/category2.tmp"
+echo -e "Remove the leading #'s to add category\nAdd leading #'s to remove category" > $target
+cat $CATEGORIES >> $target
+sed 's/^/#/g' $target > $target2
+mv $target2 $target
+for x in $CATEGORY; do
+sed "s/^#$x/$x/" $target > $target2
+mv $target2 $target
+done
+edit $target
+sed "/#/d" $target > $target2
+mv $target2 $target
+CATEGORY=`cat $target`
+catcount=`wc -l $target | awk '{ print $1 }'`
+rm $target
+echo -e "$TITLE\t$ARTICLE_AUTHOR\t$ARTICLE_AUTHOR_EMAIL\t$PERMAPATH\t$ENCLOSURE_BIT\t$catcount\t$prettyDATE\t$pubDATE" > $ENTRIES/$ARTICLE_ID
+echo "$ENCLOSURE" >> $ENTRIES/$ARTICLE_ID
+echo "$CATEGORY" >> $ENTRIES/$ARTICLE_ID
+echo "$CONTENT" >> $ENTRIES/$ARTICLE_ID
+updatepermalink
+rm $ARCHIVES/category/* >& /dev/null
+for x in $ENTRIES/*
+	do
+	META=`head -n1 $x`
+	splitbits "$META"
+	ARTICLE_ID=`basename "$x"`
+	CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | sed -n "1,${catcount}p"`
+        find_template Misc.tpl
+	WEBPATH="../../"
+	if [ "$catcount" -eq 1 ]; then
+		touch "$ARCHIVES/category/$CATEGORY"
+		echo -e "$ARTICLE_ID\t${list_item_link}" >> $ARCHIVES/category/"$CATEGORY"
+	else
+		count=$catcount
+		while [ "$count" -gt 0 ]; do
+			category=`echo "$CATEGORY" | head -n$count | tail -n1`
+			touch $ARCHIVES/category/"$category"
+			echo -e "$ARTICLE_ID\t${list_item_link}" >> "$ARCHIVES/category/$category"
+			count=$(( $count-1 ))
+		done
+	fi
+done
+updatearchives
+rebuildindex
+clear
+}
+
+spchkarticle() 
+{
+clear
+entrytotal=`ls $ENTRIES/* | wc -l | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Spell Check Article"
+menubanner
+if [[ "$entrytotal" -eq "0" ]];then
+	echo "";
+	echo "                     You have no articles to spell check.               ";
+	sleep 3
+	return
+else	
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		echo "  $x) `cat $MASTER_DB | head -n$x | tail -n1 | cut -f2`";
+	fi
+x=$(( $x-1))
+done
+fi
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+clear
+ARTICLE_ID=`cat $MASTER_DB | head -n$MODIFY | tail -n1 | cut -f1`
+FILE2CHK=$ENTRIES/$ARTICLE_ID
+# bits taken from quickedit()
+META=`cat $FILE2CHK | head -n1 | tail -n1`
+splitbits "$META"
+cat "$FILE2CHK" | sed -n "1,${cutmeta}p" > $FILE2CHK.meta
+cat "$FILE2CHK" | sed "1,${cutmeta}d"  > $FILE2CHK.tmp
+if [ "$AUTOFORMAT" -eq 1 ]; then
+cat $FILE2CHK.tmp | sed 's/^<p>//g;s/<\/p>//g' > $FILE2CHK
+else
+cat $FILE2CHK.tmp > $FILE2CHK
+fi  
+spell "$FILE2CHK";
+mv $FILE2CHK.meta $FILE2CHK.tmp
+if [ "$AUTOFORMAT" -eq 1 ]; then
+cat $FILE2CHK | sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' >> $FILE2CHK.tmp
+else
+cat $FILE2CHK >> $FILE2CHK.tmp
+fi
+mv $FILE2CHK.tmp $FILE2CHK
+rm -f "$FILE2CHK.bak";
+rebuildindex
+clear
+}
+
+
+rebuildsite()
+{
+echo
+rm $ARCHIVES/monthly/* $ARCHIVES/category/* >& /dev/null
+rm -rf $ROOTDIR/archives/* >& /dev/null
+mkdir -p $ROOTDIR/archives >& /dev/null
+chmod 777 $ROOTDIR/archives
+echo -n "  Rebuilding permalink articles..."
+for x in $ENTRIES/*
+	do
+	META=`head -n1 $x`
+	splitbits "$META"
+	ARTICLE_ID=`basename $x`
+	updatepermalink
+done
+echo "DONE"
+rm $MASTER_DB
+> $MASTER_DB
+echo -n "  Rebuilding archive pages..."
+for x in $ENTRIES/*
+	do
+	META=`head -n1 $x`
+	splitbits "$META"
+	ARTICLE_ID=`basename "$x"`
+	echo -e "$ARTICLE_ID\t$TITLE" >> $MASTER_DB 
+	CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | sed -n "1,${catcount}p"`
+	WEBPATH="../../../"
+        find_template Misc.tpl
+	echo -e "$ARTICLE_ID\t${month_lil}" >> $ARCHIVES/monthly/$YEAR-$MONTH
+	
+	if [ "$catcount" -eq 1 ]; then
+		touch "$ARCHIVES/category/$CATEGORY"
+		WEBPATH="../../"
+                find_template Misc.tpl
+		echo -e "$ARTICLE_ID\t${list_item_link}" >> $ARCHIVES/category/"$CATEGORY"
+	else
+		count=$catcount
+		while [ "$count" -gt 0 ]; do
+			category=`echo "$CATEGORY" | head -n$count | tail -n1`
+			touch $ARCHIVES/category/"$category"
+			WEBPATH="../../"
+                        find_template Misc.tpl
+			echo -e "$ARTICLE_ID\t${list_item_link}" >> "$ARCHIVES/category/$category"
+			count=$(( $count-1 ))
+		done
+	fi
+done
+sort -u "$MASTER_DB" > "$MASTER_DB.tmp"
+mv $MASTER_DB.tmp $MASTER_DB
+rebuildarchives 
+
+echo "DONE"
+echo -n "  Rebuilding the index..."
+WEBPATH=""
+recententries 
+catsidebar
+addsearch
+addquote
+rebuildlinks
+rebuildpages
+rebuildindex
+echo "DONE"
+if [ "$RSS" -eq 1 ]; then
+	echo -n "  Rebuilding RSS feed..."
+	generateRSS "$RSS_MAXENTRIES" "$ROOTDIR/index.xml"
+	echo "DONE"
+fi
+sleep 3
+clear
+}
+
+importRSS()
+{
+clear
+CHOICE=""
+if [ -z $FILE2IMPORT ]; then
+echo -n "  Enter the path to the RSS2.0 file to import :"; read FILE2IMPORT
+	if [ -z $FILE2IMPORT ]; then
+		return
+	fi
+fi
+echo;
+echo "  Okay, importing $FILE2IMPORT.";
+echo -n "  Is this correct (Y/n) :"; read CHOICE
+case $CHOICE in
+n | N ) clear;
+	return 2;;
+* ) clear;;
+esac
+
+echo "  This is gonna take a bit, go read your email or something...";
+## Cut off the cruft
+sed '1,/<\/image>/d;/<\/channel>/d;/<\/rss>/d' $FILE2IMPORT > $CONF_DIR/import.tmp
+## Discover number of articles
+article_count=`grep "<item>" $CONF_DIR/import.tmp | wc -l | awk '{ print $1 }'`
+
+## generate entry bits and add them to master.db 
+while [ "$article_count" -gt 0 ]; do
+item=`sed -n '1,/<\/item>/p' $CONF_DIR/import.tmp`
+TITLE=`echo "$item" | grep \<title\> | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/<title>//;s/<\/title>//'`
+CATEGORY=`echo "$item" | grep \<category\> | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/<category>//;s/<\/category>//'`
+CATCOUNT=`echo "$CATEGORY" | wc -l | awk '{ print $1 }'`
+ENCLOSURE=`echo "$item" | grep \<enclosure\> | sed 's/^[ \t]*//;s/[ \t]*$//'`
+
+# If the enclosure variable is null then no cast, otherwise
+# there's a podcast.
+if [ -z "$ENCLOSURE" ]; then
+	ENCLOSURE_BIT="0"
+		else
+	ENCLOSURE_BIT="1"
+fi
+subPERMAPATH=`echo "$item" | grep \<link\> | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/<link>//;s/<\/link>//;'`
+RSS_URL=`echo "$subPERMAPATH" | sed 's/\(http\:\/\/[^\/]*\/\)\(.*.\)/\1/g'` 
+NOSPACES=`echo "$subPERMAPATH" | sed "s|$RSS_URL\/archives\/||" | cut -c11- | sed 's/index.html//' | sed 's/\//_/g' | sed 's/-/_/g'`
+PERMAPATH=`echo "$subPERMAPATH" | sed "s|$RSS_URL||" `
+subDATE=`echo "$item" | grep \<pubDate\> | sed 's/<pubDate>//;s/<\/pubDate>//' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/\ \ /\ /g'`
+RSSYear=`echo "$subDATE" | cut -f4 -d\ `
+RSSDay=`echo "$subDATE" | cut -f2 -d\ `
+if [ "$RSSDay" -lt 10 ]; then
+	RSSDay=`echo "$RSSDay" | sed 's/^/0/'`
+fi
+RSSMonth=`echo "$subDATE" | cut -f3 -d\  | sed 's/Jan/01/;s/Feb/02/;s/Mar/03/;s/Apr/04/;s/May/05/;s/Jun/06/;s/Jul/07/;s/Aug/08/;s/Sep/09/;s/Oct/10/;s/Nov/11/;s/Dec/12/;'`
+TT=`echo "$subDATE" | grep -`
+if [ -z "$TT" ];
+	then
+		pubDATE="$subDATE"
+                RSSTime=`echo "$subDATE" | sed 's/\ \ /\ /g' |cut -f5 -d\ | sed 's/://g'`
+                DATE=`echo "$subDATE" | cut -c1-16`
+	else
+		RSSTime=`echo "$subDATE" | sed 's/://g' | cut -c12-17`
+		DATETMP=`echo "$subDATE" | sed 's/-//g'| cut -c1-8`
+		pubDATE1=`date -d $DATETMP +"%a, %e %b %Y"`
+		pubDATE2=`date -d $DATETMP +"%Z"`
+		pubDATE="$pubDATE1 $RSSTime $pubDATE2"
+		DATE=`date -d $DATETMP +"%A, %B %e, %Y"`
+fi
+ARTICLE_ID_TIME=`echo "$RSSTime"`
+ARTICLE_ID_URL=`echo "$RSS_URL" | sed 's|\/|\\/|g'`
+ARTICLE_ID_DATE=`echo "$subPERMAPATH" | sed "s|${ARTICLE_ID_URL}archives\/||" | sed 's/\///g' | cut -c1-8`
+ARTICLE_ID="${ARTICLE_ID_DATE}${ARTICLE_ID_TIME}"
+CONTENT=`echo "$item" | sed -n '/content\:encoded/,/\]\]/p' | sed 's/<content:encoded><\!\[CDATA\[//' | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/\]\]><\/content:encoded>//'`
+
+echo -e "$TITLE\t$AUTHOR\t$AUTHOR_EMAIL\t$PERMAPATH\t$ENCLOSURE_BIT\t$CATCOUNT\t$DATE\t$pubDATE" > $ENTRIES/$ARTICLE_ID
+echo "$ENCLOSURE" >> $ENTRIES/$ARTICLE_ID
+echo "$CATEGORY" >> $ENTRIES/$ARTICLE_ID
+echo "$CATEGORY" >> $CATEGORIES
+echo "$CONTENT" >> $ENTRIES/$ARTICLE_ID
+
+echo -e "$ARTICLE_ID\t$TITLE" >> $MASTER_DB
+sed '1,/<\/item>/d' $CONF_DIR/import.tmp > $CONF_DIR/import1.tmp
+mv $CONF_DIR/import1.tmp $CONF_DIR/import.tmp
+article_count=$(( $article_count-1 ))
+done
+rm import.tmp
+sort -u "$MASTER_DB" > "$MASTER_DB.tmp"
+mv $MASTER_DB.tmp $MASTER_DB
+ls $ARCHIVES/category/ >> $CATEGORIES
+sort -u $CATEGORIES > $CONF_DIR/list.tmp
+mv $CONF_DIR/list.tmp $CATEGORIES
+rebuildsite
+}
+
+generateRSS()
+{
+article_count="$1"
+target="$2"
+RSS_tmp=$CONF_DIR/rss.tmp
+touch $RSS_tmp
+lastBuildDate=`date +"%a, %e %b %Y %T %Z"`
+
+count=0
+while [ "$count" -lt "$article_count" ]
+	do
+	count=$(( $count+1 ))
+    	xARTICLE_ID=`cat -n $MASTER_DB | sort -rn | sed -n "${count} p" | cut -f2`
+	if [ ! "$xARTICLE_ID" ]; then
+		break
+	fi 
+	x="$ENTRIES/$xARTICLE_ID"
+	article_bits=`head -n1 $x`
+	splitbits "$article_bits"
+	enclosure=`head -n2 $x | tail -n1`
+	RSS_ITEM_description=`sed "1,${cutmeta}d" $x | sed -n '1,/^$/p' | sed 's/^<p>//g;s/<\/p>//g'`
+	RSS_ITEM_CONTENT=`sed "1,${cutmeta}d" $x`
+	sed '1,2d' $x | sed -n "1,${catcount}p" | sed 's/^/<category>/g' | sed 's/$/<\/category>/g' > $x.tmp
+	itemcat=`cat $x.tmp`
+find_template RSS_ITEM.tpl
+rm $x.tmp
+echo "$RSS_item" >>  "$RSS_tmp"
+done
+
+RSS_CONTENTS=`cat $RSS_tmp`
+find_template RSS.tpl
+echo "$RSS_TEMPLATE" > $target
+rm $RSS_tmp
+}
+
+synchronizesite()
+{
+	clear
+	if [ "$SYNCPROTO" != "rsync" ] && [ "$SYNCPROTO" != "scp" ];
+	then
+		echo " invalid Synchronization Protocal please define SYNCPROTO [rsync|scp] in $HOME/.bblog.conf"
+		echo "SYNCPROTO currently set to $SYNCPROTO"
+		sleep 5
+		return;
+	fi
+	if [ -z $REMOTEHOST ];
+	then
+		echo "Error: No REMOTEHOST defined please define REMOTEHOST in $HOME/.bblog.conf"
+		sleep 5
+		return;
+	fi
+	if [ -z $REMOTEROOT ];
+	then
+		echo "Error: No REMOTEROOT defined please define REMOTEROOT in $HOME/.bblog.conf"
+		sleep 5
+		return;
+	fi
+	if [ -z "$SYNCOPTS" ];
+	then
+		echo "Error: No SYNCOPTS defined please define SYNCOPTS in $HOME/.bblog.conf"
+		echo " Please ensure your chosen options match your chosen protocal."
+		sleep 5
+		return;
+	fi
+	echo "Synchronizing to remote server with $SYNCPROTO ... this may take a few moments please be patient."
+
+	if [  "$SYNCPROTO" == "rsync" ];
+	then
+		echo "$SYNCOPTS $ROOTDIR/*  $REMOTEUSER@$REMOTEHOST:$REMOTEROOT" > $CONF_DIR/rsync.tmp
+		RSYNCOPTS=`cat $CONF_DIR/rsync.tmp`
+		rsync $RSYNCOPTS 
+		rm $CONF_DIR/rsync.tmp
+	else 
+		scp $SYNCOPTS  $ROOTDIR/* $REMOTEHOST:$REMOTEROOT
+	fi
+	return;
+}
+
+splitbits()
+{
+export TITLE=`echo "$1" | cut -f1`
+export ARTICLE_AUTHOR=`echo "$1" | cut -f2`
+export ARTICLE_AUTHOR_EMAIL=`echo "$1" | cut -f3`
+export PERMAPATH=`echo "$1" | cut -f4`
+export ENCLOSURE_BIT=`echo "$1" | cut -f5`
+export catcount=`echo "$1" | cut -f6`
+export prettyDATE=`echo "$1" | cut -f7`
+export pubDATE=`echo "$1" | cut -f8`
+export YEAR=`echo $PERMAPATH | cut -c10-13`
+export MONTH=`echo $PERMAPATH | cut -c15-16`
+export DAY=`echo $PERMAPATH | cut -c18-19`
+name $MONTH
+export cutmeta=$(( $catcount+2 ))
+export LINK="$URL/$PERMAPATH"
+}
+
+################################################################
+##                       Link Functions                       ##
+################################################################
+
+addlinks()
+{
+clear
+checklinks=`ls $LINKS_DIR/*.lnk 2>/dev/null | wc -l`
+if [[ $checklinks = 0 ]]; 
+    then 
+	    newcategory
+fi
+while true
+do
+clear
+btitle="Add Links"
+menubanner
+x=0
+linkage=`cat $LINKS_DIR/linklist`
+entrytotal=`wc -l $LINKS_DIR/linklist | awk '{ print $1 }'`
+for ff in $linkage
+do
+x=$(( $x+1 ))
+echo "  $x)  `echo $ff | head -n1 | tail -n1 | cut -d. -f1`";
+done
+
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | c for new category] : "; read MODIFY
+charcount=`echo $MODIFY | wc -c`
+alphastrip=`echo $MODIFY | sed 's/[a-zA-Z]//g' | wc -c`
+if [[ "$charcount" -gt "$alphastrip" ]]; then
+	isalpha=1
+else
+	isalpha=0
+fi
+case $MODIFY in
+*[0-9]* ) if [[ "$MODIFY" -gt "$entrytotal" ]]
+		then
+			clear
+			x=$entrytotal
+			y=$(( $x-10 ))
+	elif [[ "$isalpha" -eq "1" ]]
+		then
+			clear
+			x=$entrytotal
+			y=$(( $x-10 ))
+		else	
+			break
+	fi ;;
+
+x | X ) clear
+	MODIFY=""
+	return ;;
+	
+c | C ) clear; newcategory ;;
+
+* ) clear 
+    MODIFY="";
+
+esac
+
+done
+subtarget=`head -n$MODIFY $LINKS_DIR/linklist | tail -n1`
+target=$LINKS_DIR/${subtarget}
+clear
+echo -n "  Enter the title for your link : "; read TITLE 
+echo -n "  Enter the link URI : "; read LINKURL 
+echo "";
+echo -n "  Is the above information correct? (Y/n) "; read -n1 whichisit
+
+case $whichisit in
+
+n ) clear; return ;;
+N ) clear; return ;;
+* ) clear;;
+
+esac
+find_template Misc.tpl
+echo "$nav_link" >>  "$target"
+rebuildlinks
+rebuildindex
+}
+
+editlinks()
+{
+clear
+entrytotal=`wc -l $LINKS_DIR/linklist | awk '{ print $1 }'`
+if [[ $entrytotal = 0 ]]; 
+    then 
+	    newcategory
+fi
+x=0
+subChars=`echo "${ROOTDIR}" | wc -c`
+Chars=$(( $subChars+1 ))
+linkage=`cat $LINKS_DIR/linklist`
+while true
+do
+clear
+btitle="Edit Links"
+menubanner
+for ff in $linkage
+do
+x=$(( $x+1 ))
+echo "  $x)  `echo $ff | head -n$x | tail -n1 | cut -d. -f1`"
+done
+
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit ] and hit enter : "; read MODIFY
+garbagecheck2
+done
+subtarget=`head -n$MODIFY $LINKS_DIR/linklist | tail -n1`
+target=$LINKS_DIR/${subtarget}
+clear
+edit $target
+rebuildlinks
+rebuildpages
+rebuildindex
+}
+
+newcategory()
+{
+clear
+echo "";
+echo -n "  Enter the name for your new category :"; read KAT
+if [[ "$KAT" = "" ]]; then
+	return
+fi
+category=`echo $KAT | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g"`
+target="$LINKS_DIR/${category}.lnk"
+targetest="${category}.lnk"
+touch $target
+chmod 644 $target
+clear
+echo $targetest >> $LINKS_DIR/linklist
+MODIFY=`wc -l $LINKS_DIR/linklist | awk '{ print $1}'`
+}
+
+removecategory()
+{
+MODIFY="";
+while true
+do
+clear	
+btitle="Remove Category"
+menubanner
+echo "";
+echo "   All links under the category you choose to remove will be lost."
+echo "";
+kats=`cat $LINKS_DIR/linklist`
+entrytotal=`wc -l $LINKS_DIR/linklist | awk '{ print $1}'`
+x=0
+for ff in $kats
+do
+x=$(( $x+1 ))
+echo "  $x) `echo $ff | head -n1 | tail -n1 | cut -d. -f1 | sed 's/_/ /g'`";
+done
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit ] and hit enter : "; read MODIFY
+garbagecheck
+done
+target=`head -n$MODIFY $LINKS_DIR/linklist | tail -n1`
+rm $LINKS_DIR/$target
+sed "s/${target}//g" $LINKS_DIR/linklist | sed -e '/^$/d' > $LINKS_DIR/linklist
+rebuildlinks
+rebuildpages
+rebuildindex
+}
+
+catorder()
+{
+clear
+edit $LINKS_DIR/linklist 
+rebuildlinks
+rebuildpages
+rebuildindex
+}
+
+usersidebox()
+{
+clear
+echo "";
+echo -n "  Enter the name for your sidebox :"; read KAT
+if [[ "$KAT" = "" ]]; then
+	return
+fi
+category=`echo $KAT | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g"`
+target="$LINKS_DIR/${category}.usb"
+targetest="${category}.usb"
+touch $target
+chmod 644 $target
+clear
+echo $targetest >> $LINKS_DIR/linklist
+MODIFY=`wc -l $LINKS_DIR/linklist | awk '{ print $1}'`
+}
+
+################################################################
+##                       Page Functions                       ##
+################################################################
+
+addpage()
+{
+clear
+echo "";
+echo -n "  Enter a title for your new page : "; read TITLE
+if [[ "$TITLE" == "" ]]; then
+	return
+else
+	NOSPACES=`echo "$TITLE" | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g;/\// s/\//-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"`
+fi
+echo -n "  Hit \"enter\" and start writing..."; read -n1 HITME
+PAGE_ID=`date +"%Y%m%d%H%M%S"`
+PARTS="$PAGE_DIR/$PAGE_ID"
+clear
+
+edit $PAGE_DIR/scratch
+
+find_template Misc.tpl
+
+if [ "$AUTOFORMAT" -eq 1 ]; then
+PAGE_CONTENT=`sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' $PAGE_DIR/scratch`
+else
+PAGE_CONTENT=`$FORMATTING_PLUGIN $PAGE_DIR/scratch`
+fi
+NEWPAGE=$(cat<<ThisIsANewPage
+$TITLE
+$NOSPACES
+$PAGE_CONTENT
+ThisIsANewPage)
+
+echo "$NEWPAGE" > $PARTS
+
+touch $LINKS_DIR/Pages.lnk
+find_template Misc.tpl
+echo "$page_list_item_link" >> $LINKS_DIR/Pages.lnk
+rm $PAGE_DIR/scratch
+touch $LINKS_DIR/Pages2.lnk
+sed 's/="/="..\//g' $LINKS_DIR/Pages.lnk > $LINKS_DIR/Pages2.lnk >& /dev/null
+rebuildlinks
+rebuildpages
+rebuildindex
+clear
+}
+
+editpage()
+{
+clear
+entrytotal=`ls $PAGE_DIR | wc -l | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Modify Page"
+menubanner
+if [ "$entrytotal" -eq 0 ];then
+	echo "";
+	echo "                     You have no pages to modify.                 " 
+	echo "           Hit enter and select \"Add page\"(Option 1) from the		" 
+	echo -n "         Page manager submenu. (You can hit \"enter\" now)"; read HITME
+	return
+elif [ "$entrytotal" -eq 1 ]; then
+	MODIFY=1
+	break
+else
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		file=`ls $PAGE_DIR 2> /dev/null | head -n$x | tail -n1`
+		echo "  $x) `sed -n '1p' $PAGE_DIR/$file`";
+	fi
+x=$(( $x-1))
+done
+fi
+echo "";
+echo -n "  Select [ 1 - ${entrytotal} | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+PAGE_ID=`ls $PAGE_DIR/ 2>/dev/null | head -n$MODIFY | tail -n1`
+target="$PAGE_DIR/$PAGE_ID"
+TITLE=`sed -n '1p' $target`
+NOSPACES=`sed -n '2p' $target`
+PAGE_CONTENT=`sed -e '1,2d' $target`
+PAGE_TITLE="$TITLE | $SITENAME"
+WEBPATH="../"
+scratch="$PAGE_DIR/scratch"
+if [ "$AUTOFORMAT" -eq 1 ]; then
+echo "$PAGE_CONTENT" | sed 's/^<p>//g;s/<\/p>//g' > $scratch
+else
+echo "$PAGE_CONTENT" > $scratch
+fi
+clear
+edit $scratch
+rm -f $target
+if [ "$AUTOFORMAT" -eq 1 ]; then
+	PAGE_CONTENT=`sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' $scratch`
+else
+	PAGE_CONTENT=`cat $scratch`
+fi
+rm $scratch
+find_template Misc.tpl
+NEWPAGE=$(cat<<ThisIsANewPage
+$TITLE
+$NOSPACES
+$PAGE_CONTENT
+ThisIsANewPage)
+
+echo "$NEWPAGE" > $target
+
+rebuildpages
+clear
+}
+
+removepage()
+{
+clear
+entrytotal=`ls $PAGE_DIR | wc -l | awk '{ print $1 }'`
+x=$entrytotal
+y=$(( $x-10 ))
+clear
+while true
+do
+btitle="Remove Page"
+menubanner
+if [[ "$entrytotal" -eq "0" ]];then
+	echo "";
+	echo "                     You have no pages to remove.                 " 
+	echo "           Hit enter and select \"Add page\"(Option 1) from the		" 
+	echo -n "         Page manager submenu. (You can hit \"enter\" now)"; read HITME
+	return
+else	
+while [ "$x" -gt "$y" ];
+do
+	if [ "$x" -lt "1" ];
+	then
+		echo ""
+	else
+		file=`ls $PAGE_DIR 2>/dev/null | head -n$x | tail -n1`
+		echo "  $x) `sed -n '1p' $PAGE_DIR/$file`";
+	fi
+x=$(( $x-1))
+done
+fi
+echo "";
+echo -n "  Select [ 1 - $entrytotal | x to exit | n for next ten ] and hit enter : "; read MODIFY
+garbagecheck
+done
+page=`ls $PAGE_DIR/ 2>/dev/null | head -n$MODIFY | tail -n1`
+delpage="$PAGE_DIR/$page"
+NOSPACES=`sed -n '2p' $delpage`
+deldir="$ROOTDIR/$NOSPACES/"
+sed "/${NOSPACES}/d" $LINKS_DIR/Pages.lnk | sed -e '/^$/d' > $LINKS_DIR/Pages.lnk.tmp
+mv $LINKS_DIR/Pages.lnk.tmp $LINKS_DIR/Pages.lnk
+touch $LINKS_DIR/Pages2.lnk
+sed 's/="/="..\//g' $LINKS_DIR/Pages.lnk > $LINKS_DIR/Pages2.lnk >& /dev/null
+clear
+rm $delpage
+rm -r $deldir 
+rebuildlinks
+rebuildpages
+rebuildindex
+clear
+}
+
+################################################################
+##                      Theme Functions                       ##
+################################################################
+
+editstylesheet()
+{
+clear
+getarget=`head -n1 ${ROOTDIR}/style.css | tail -n1 | sed 's/\/\*//g' | sed 's/\*\///g' | sed 's/ //g'`
+target="$ROOTDIR/theme/$getarget/style.css"
+subtarget=$getarget
+edit $target
+cp -f $target $ROOTDIR/style.css
+}
+
+editconfig()
+{
+clear
+edit $HOME/.bblog.conf
+. $HOME/.bblog.conf
+}
+
+thememanager()
+{
+clear
+themelist=`ls ${ROOTDIR}/theme/`
+entrytotal=`ls ${ROOTDIR}/theme/ | wc -l`
+x=0;
+MODIFY="";
+while true
+	do
+clear
+btitle="Theme Manager"
+menubanner
+for y in $themelist
+do
+x=$(( $x+1 ))
+echo "  $x) $y ";
+done
+echo "";
+echo -n "  Select [ 1 - $entrytotal | x to exit ] and hit enter : "; read MODIFY
+garbagecheck2
+done
+
+subtarget=`ls ${ROOTDIR}/theme/ | head -n$MODIFY | tail -n1`
+target="${ROOTDIR}/theme/"${subtarget}"/style.css"
+cp -f ${target} ${ROOTDIR}/style.css
+}
+
+
+
+
+################################################################
+##                    Generator functions                     ##
+################################################################
+
+rebuildindex()
+{
+target="$ROOTDIR/index.html"
+scratch="$CONF_DIR/scratch.tmp"
+tmp="$CONF_DIR/index.tmp"
+tmp2="$CONF_DIR/index2.tmp"
+touch $tmp2
+WEBPATH=""
+PAGE_TITLE=$SITENAME
+touch $scratch $tmp
+cat $CONF_DIR/sticky > $scratch
+storybits=""
+counter=""
+storybits=`ls $ENTRIES/* | wc -l | awk '{ print $1 }'`
+if [[ "$storybits" -lt "$MAXENTRIES" ]]
+then
+	counter=$storybits
+else
+	counter=$MAXENTRIES
+fi
+tail -n$counter $MASTER_DB | cut -f1 | sed '1!G;h;$!d' > $tmp
+index_entries=`cat $tmp`
+for ARTICLE_ID in $index_entries; do
+META=`head -n1 $ENTRIES/$ARTICLE_ID | tail -n1`
+splitbits "$META"
+CONTENT=`sed "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID` 
+CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | head -n${catcount}`
+if [ "$catcount" -eq 1 ]; then
+        thiscat=$CATEGORY
+        find_template Misc.tpl
+        multi_cat=$multicat
+else
+        abc=0
+        xyz=1
+        while [ "$xyz" -le "$catcount" ]; do
+                thiscat=`echo "$CATEGORY" | head -n$xyz | tail -n1`
+                find_template Misc.tpl
+                echo "$multicat" >> $tmp2
+		abc=$(( $abc+1 ));
+                xyz=$(( $xyz+1 ));
+        done
+multi_cat=`cat $tmp2`
+fi
+rm $tmp2 >& /dev/null
+find_template ENTRY.tpl
+echo "$article_entry" >> $scratch
+counter=$(( $counter-1 ))
+done
+cat $LINKS_DIR/links.txt >> $scratch
+ENTRIES_regular_extra_crispy=`cat $scratch`
+find_template Main.tpl
+echo "$MAIN" > $target
+rm $tmp $scratch >& /dev/null
+}
+
+rebuildpages()
+{
+y=`ls $PAGE_DIR 2> /dev/null`
+for x in $y 
+do
+TITLE=`sed -n '1p' $PAGE_DIR/$x`
+NOSPACES=`sed -n '2p' $PAGE_DIR/$x`
+PAGE_CONTENT=`sed -e '1,2d' $PAGE_DIR/$x`
+PAGE_TITLE="$TITLE | $SITENAME"
+WEBPATH="../"
+mkdir -p $ROOTDIR/$NOSPACES/ 
+chmod 777 $ROOTDIR/$NOSPACES/
+target=$ROOTDIR/$NOSPACES/index.html
+find_template Misc.tpl
+ENTRIES_regular_extra_crispy=`echo "$page_header";echo "$PAGE_CONTENT";echo "</div>";cat $LINKS_DIR/links2.txt`
+find_template Main.tpl
+echo "$MAIN" > $target
+done
+}
+
+updatepermalink()
+{
+permalink_tmp=$CONF_DIR/permalink.tmp
+touch $permalink_tmp
+p_target="$ROOTDIR/${PERMAPATH}index.html"
+mkdir -p "$ROOTDIR/$PERMAPATH" >& /dev/null
+chmod -R 777 ${ROOTDIR}/archives/${YEAR};
+WEBPATH="../../../../../"
+CONTENT=`sed "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID`
+CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | head -n${catcount}`
+if [ "$catcount" -eq 1 ]; then
+	thiscat=$CATEGORY
+        find_template Misc.tpl
+	multi_cat=$multicat
+else
+	abc=0
+	xyz=1
+	while [ "$xyz" -le "$catcount" ]; do
+		thiscat=`echo "$CATEGORY" | head -n$xyz | tail -n1`
+                find_template Misc.tpl
+		echo "$multicat" >> $permalink_tmp
+		abc=$(( $abc+1 ));
+		xyz=$(( $xyz+1 ));
+	done
+multi_cat=`cat $permalink_tmp`
+fi
+rm $permalink_tmp
+PAGE_TITLE="$TITLE | $SITENAME"
+find_template Permalink_ENTRY.tpl
+ENTRIES_regular_extra_crispy=`echo "$permalink_entry"`
+find_template Main.tpl
+echo "$MAIN" > $p_target
+}
+
+toplevelarchives()
+{
+target="${ROOTDIR}/archives/index.html"
+archive_tmp=$ARCHIVES/archive.tmp
+touch "$archive_tmp"
+PAGE_TITLE="Archives | $SITENAME"
+WEBPATH="../"
+
+catotal=`wc -l $CATEGORIES | awk '{ print $1 }'`
+y=0
+while [ "$catotal" -gt 0 ];do
+	categories=`head -n$catotal $CATEGORIES | tail -n1`
+	articletotal=`wc -l $ARCHIVES/category/"$categories" | awk '{ print $1 }'`
+		for y in $articletotal;do
+                  find_template Misc.tpl
+		echo "$cat_lil" >> $archive_tmp
+		done
+catotal=$(( $catotal-1 ))
+done
+TL_CATEGORY_ARCHIVE_LIST=`cat "$archive_tmp"`
+mv $archive_tmp $ARCHIVES/tlcategory
+touch $ARCHIVES/tlannual.tmp
+touch $ARCHIVES/tlannual
+cut -c1-4 $MASTER_DB | sort -u > $ARCHIVES/tlannual
+count=`wc -l $ARCHIVES/tlannual | awk '{ print $1 }'`
+x=1
+while [ "$x" -le "$count" ]; do
+this_year=`head -n"$x" $ARCHIVES/tlannual | tail -n1`
+this_year_count=`cut -c1-4 $MASTER_DB | sed -n "/$this_year/p" | wc -l | awk '{ print $1 }'`
+year_lil=$(cat<<YEAR_LIL
+<li><a href="$this_year/$INDEX" title="$this_year">$this_year</a> ($this_year_count)</li>
+YEAR_LIL)
+echo "$year_lil" >> $ARCHIVES/tlannual.tmp
+x=$(( $x+1 ))
+done
+cp $ARCHIVES/tlannual $ARCHIVES/annual/year_list
+mv $ARCHIVES/tlannual.tmp $ARCHIVES/tlannual
+TL_MONTHLY_ARCHIVE_LIST=`cat "$ARCHIVES/tlannual"`
+find_template TLArchive.tpl
+ENTRIES_regular_extra_crispy=`echo "$ArchiveHeader"`
+find_template Main.tpl
+echo "$MAIN" > $target
+}
+
+dailyarchives()
+{
+rm $ARCHIVES/daily/*
+year_list=`cut -c1-4 $MASTER_DB | sort -u`
+year_count=`echo "$year_list" | wc -l | awk '{ print $1 }'`
+x=1
+while [ "$x" -le "$year_count" ]; do
+this_year=`echo "$year_list" | head -n"$x" | tail -n1`
+month_list=`sed -n "/^$this_year/p" $MASTER_DB | cut -c5-6 | sort -u`
+month_count=`echo "$month_list" | wc -l | awk '{ print $1 }'`
+y=1
+while [ "$y" -le "$month_count" ]; do
+this_month=`echo "$month_list" | head -n"$y" | tail -n1`
+day_list=`sed -n "/^${this_year}${this_month}/p" $MASTER_DB | cut -c7-8`
+day_count=`sed -n "/^${this_year}${this_month}/p" $MASTER_DB | wc -l | awk '{ print $1 }'`
+z=1
+while [ "$z" -le "$day_count" ]; do
+this_day=`echo "$day_list" | head -n"$z" | tail -n1`
+ARTICLE_ID=`sed -n "/^${this_year}${this_month}/p" $MASTER_DB | head -n"$z" | tail -n1 | cut -f1`
+meta=`head -n1 "$ENTRIES/$ARTICLE_ID"`
+splitbits "$meta"
+
+update_daily_archives
+
+z=$(( $z+1 ))
+done
+y=$(( $y+1 ))
+done
+x=$(( $x+1 ))
+done
+}
+
+update_daily_archives()
+{
+if [ -z "$this_day" ]; then
+	this_day="$DAY"
+fi
+if [ -z "$this_month" ]; then
+	this_month="$MONTH"
+fi
+if [ -z "$this_year" ]; then
+	this_year="$YEAR"
+fi
+
+WEBPATH="../../../../"
+daily_lil=$(cat<<DAILY_LIL
+<li><a href="${WEBPATH}${PERMAPATH}$INDEX" title="$TITLE">$TITLE</a></li>
+DAILY_LIL)
+touch "$ARCHIVES/daily/$this_year-$this_month-$this_day"
+echo -e "$ARTICLE_ID\t$daily_lil" >> "$ARCHIVES/daily/$this_year-$this_month-$this_day"
+dailies=`cut -f2 "$ARCHIVES/daily/$this_year-$this_month-$this_day"`
+PAGE_TITLE="$LONGMONTH ${this_day}, $this_year | $SITENAME"
+day_content=$(cat<<DAYCONTENT
+</div>
+<div id="permacontent">
+<div id="breadcrumbs">You are here: 
+<a href="${WEBPATH}$INDEX">$SITENAME</a> &#x2192; 
+<a href="${WEBPATH}archives/$INDEX">Archives</a> &#x2192; 
+<a href="${WEBPATH}archives/$this_year/$INDEX">$this_year</a> &#x2192;
+<a href="${WEBPATH}archives/$this_year/$this_month/$INDEX">$LONGMONTH</a> &#x2192;
+$this_day
+</div>
+<ul>
+$dailies
+</ul>
+</div>
+DAYCONTENT)
+ENTRIES_regular_extra_crispy=`echo "$day_content"`
+find_template Main.tpl
+echo "$MAIN" > "$ROOTDIR/archives/$this_year/$this_month/$this_day/index.html"
+}
+
+monthlyarchives()
+{
+for x in $ARCHIVES/monthly/*
+do
+YEAR=`basename $x | cut -c1-4`
+MONTH=`basename $x | cut -c6-7`
+name $MONTH
+
+update_monthly_archives
+
+done
+categoryarchives
+}
+
+update_monthly_archives()
+{
+ma_target=$ROOTDIR/archives/$YEAR/$MONTH/index.html
+PAGE_TITLE="$LONGMONTH $YEAR | $SITENAME"
+WEBPATH="../../../"
+monthly_archives_linklist=`sort -r $ARCHIVES/monthly/$YEAR-$MONTH | cut -f2 | sort -u`
+find_template Misc.tpl
+ENTRIES_regular_extra_crispy=`echo "$monthly_archives"`
+find_template Main.tpl
+echo "$MAIN" > $ma_target
+}
+
+annualarchives()
+{
+annual_archives=$ARCHIVES/annual
+count=`wc -l "$annual_archives/year_list" | awk '{ print $1 }'`
+x=1
+while [ "$x" -le "$count" ]; do
+	this_year=`head -n$x "$annual_archives/year_list" | tail -n1`
+	this_year_count=`sed -n "/^$this_year/p" $MASTER_DB | cut -c1-6 | sort -u | wc -l | awk '{ print $1 }'`
+> "$annual_archives/$this_year"
+y=1
+while [ "$y" -le "$this_year_count" ]; do
+MONTH=`sed -n "/^$this_year/p" $MASTER_DB | cut -c5-6 | sort -u | head -n$y | tail -n1`
+MONTH_COUNT=`sed -n "/^$this_year$MONTH/p" $MASTER_DB | wc -l | awk '{ print $1 }'`
+name "$MONTH"
+annual_lil=$(cat<<ANNUAL_LIL1234
+<li><a href="$MONTH/$INDEX" title="$LONGMONTH $this_year">$LONGMONTH</a> <strong>($MONTH_COUNT)</strong></li>
+ANNUAL_LIL1234)
+echo "$annual_lil" >> "$annual_archives/$this_year"
+y=$(( $y+1 ))
+done
+PAGE_TITLE="$this_year | $SITENAME"
+WEBPATH="../../"
+annual_list=`cat "$annual_archives/$this_year"`
+annual_guts=$(cat<<guts_o_annual
+</div>
+<div id="permacontent">
+<div id="breadcrumbs">You are here: 
+<a href="${WEBPATH}${INDEX}">$SITENAME</a> &#x2192; 
+<a href="${WEBPATH}archives/$INDEX">Archives</a> &#x2192; 
+$this_year
+</div>
+<ul>
+$annual_list
+</ul>
+</div>
+guts_o_annual)
+        ENTRIES_regular_extra_crispy=`echo "$annual_guts"`
+        find_template Main.tpl
+        echo "$MAIN" > "$ROOTDIR/archives/$this_year/index.html"	
+	x=$(( $x+1 ))
+done
+}
+
+categoryarchives()
+{
+for x in $ARCHIVES/category/*
+do
+thiscat=`basename "$x"`
+c_target=$ROOTDIR/archives/"$thiscat"/index.html
+mkdir -p $ROOTDIR/archives/"$thiscat" >& /dev/null
+chmod 777 $ROOTDIR/archives/"$thiscat"
+PAGE_TITLE="$thiscat | $SITENAME"
+WEBPATH="../../"
+CONTENT=`sort -r $ARCHIVES/category/"$thiscat" | cut -f2`
+find_template CategoryArchive.tpl
+echo "$mCategoryPage" > "$c_target"
+done
+}
+
+name()
+{
+case $1 in
+01 ) export LONGMONTH="January"; export SHORTMONTH="Jan" ;;
+02 ) export LONGMONTH="February"; export SHORTMONTH="Feb" ;;
+03 ) export LONGMONTH="March"; export SHORTMONTH="Mar" ;;
+04 ) export LONGMONTH="April"; export SHORTMONTH="Apr" ;;
+05 ) export LONGMONTH="May"; export SHORTMONTH="May" ;;
+06 ) export LONGMONTH="June"; export SHORTMONTH="Jun" ;;
+07 ) export LONGMONTH="July"; export SHORTMONTH="Jul" ;;
+08 ) export LONGMONTH="August"; export SHORTMONTH="Aug" ;;
+09 ) export LONGMONTH="September"; export SHORTMONTH="Sep" ;;
+10 ) export LONGMONTH="October"; export SHORTMONTH="Oct" ;;
+11 ) export LONGMONTH="November"; export SHORTMONTH="Nov" ;;
+12 ) export LONGMONTH="December"; export SHORTMONTH="Dec" ;;
+esac
+}
+
+
+rebuildarchives()
+{
+dailyarchives
+monthlyarchives
+annualarchives
+toplevelarchives
+}
+
+updatearchives()
+{
+update_daily_archives
+update_monthly_archives
+categoryarchives
+annualarchives
+toplevelarchives
+}
+
+rebuildlinks()
+{
+## FIXME - Most of these conditionals don't really fit into a template
+## all that well.  I'll figure something out.
+
+touch $LINKS_DIR/links.txt $LINKS_DIR/links2.txt $LINKS_DIR/linklist
+target="$LINKS_DIR/links.txt"
+target2="$LINKS_DIR/links2.txt"
+linkage=`cat $LINKS_DIR/linklist`
+echo -e "</div>\n<div id=\"linklist\">" > $target
+echo -e "</div>\n<div id=\"linklist\">" > $target2
+for ff in $linkage
+do
+    echo "<div class=\"LinkListTitle\">" >> $target
+    linkatitle=`echo $ff | head -n1 | tail -n1 | cut -d. -f1 | sed 's/_/ /g'`
+    ext=`echo $ff | head -n1 | tail -n1 | cut -d. -f2- | awk '{ print $1 }'`
+    if [ "${linkatitle}" = "Search" ]; then
+    echo "<h4>${linkatitle}</h4>" >> $target
+    elif [ "${linkatitle}" = "Quote" ]; then
+    echo "<h4>${linkatitle}</h4><p>" >> $target
+    elif [ "${linkatitle}" = "cat" ]; then
+    echo "<h4>Categories</h4><ul>" >> $target
+    elif [ "${ext}" = "usb" ]; then
+    echo "<h4>${linkatitle}</h4>" >> $target
+    else
+    echo "<h4>${linkatitle}</h4><ul>" >> $target
+    fi
+    if [ "$ff" = "Navigation.lnk" ];then
+    cat $LINKS_DIR/Navigation.lnk >> $target
+    cat $LINKS_DIR/Pages.lnk >> $target
+    elif [ "$ff" = "Pages.lnk" ]; then
+    echo
+    else
+    cat $LINKS_DIR/$ff >> $target
+    fi
+    if [ "${linkatitle}" = "Search" ]; then
+    echo "</div>" >> $target
+    elif [ "${linkatitle}" = "Quote" ]; then
+    echo "</p></div>" >> $target
+    elif [ "${ext}" = "usb" ]; then
+    echo "</div>" >> $target
+    else
+    echo "</ul></div>" >> $target
+    fi
+    echo "" >> $target
+done
+echo "</div>" >> $target
+for ff in $linkage
+do
+    echo "<div class=\"LinkListTitle\">" >> $target2
+    linkatitle=`echo $ff | head -n1 | tail -n1 | cut -d. -f1 | sed 's/_/ /g'`
+    ext=`echo $ff | head -n1 | tail -n1 | cut -d. -f2- | awk '{ print $1 }'`
+    if [ "${linkatitle}" = "Search" ]; then
+    echo "<h4>${linkatitle}</h4>" >> $target2
+    elif [ "${linkatitle}" = "Quote" ]; then
+    echo "<h4>${linkatitle}</h4><p>" >> $target2
+    elif [ "${linkatitle}" = "cat" ]; then
+    echo "<h4>Categories</h4><ul>" >> $target2
+    cat "$LINKS_DIR/$linkatitle" >> $target2
+    elif [ "${ext}" = "usb" ]; then
+    echo "<h4>${linkatitle}</h4>" >> $target2
+    else
+    echo "<h4>${linkatitle}</h4><ul>" >> $target2
+    fi
+    if [ "$ff" = "Navigation.lnk" ];then
+    sed 's/="/="..\//g;s/..\/http/http/g' $LINKS_DIR/Navigation.lnk >> $target2
+    cat $LINKS_DIR/Pages2.lnk >> $target2 >& /dev/null
+    elif [ "$ff" = "Pages2.lnk" ]; then
+    echo
+    elif [ "$ff" = "Search.lnk" ];then
+    cat $LINKS_DIR/Search.lnk >> $target2
+    echo
+    else
+    sed 's/="/="..\//g;s/..\/http/http/g' $LINKS_DIR/$ff >> $target2
+    fi
+    if [ "${linkatitle}" = "Search" ]; then
+    echo "</div>" >> $target2
+    elif [ "${linkatitle}" = "Quote" ]; then
+    echo "</p></div>" >> $target2
+    elif [ "${ext}" = "usb" ]; then
+    echo "</div>" >> $target2
+    else
+    echo "</ul></div>" >> $target2
+    fi
+    echo "" >> $target2
+done
+echo "</div>" >> $target2
+}
+
+articlecat()
+{
+clear 
+echo -n "  Enter the title for your new article category : "; read MODIFY
+target="$CATEGORIES"
+if [[ "$MODIFY" = "" ]]; then
+	return
+fi
+echo "$MODIFY" >> $target
+}
+
+garbagecheck()
+{
+charcount=`echo $MODIFY | wc -c`
+alphastrip=`echo $MODIFY | sed 's/[a-zA-Z]//g' | wc -c`
+if [[ "$charcount" -gt "$alphastrip" ]]; then
+	isalpha=1
+else
+	isalpha=0
+fi
+case $MODIFY in
+*[0-9]* ) if [[ "$MODIFY" -gt "$entrytotal" ]]
+		then
+			clear
+			x=$entrytotal
+			y=$(( $x-10 ))
+	elif [[ "$isalpha" -eq "1" ]]
+		then
+			clear
+			x=$entrytotal
+			y=$(( $x-10 ))
+		else	
+			break 
+	fi ;;
+
+x | X ) clear
+	MODIFY=""
+	continue 2;;
+
+n | N ) clear
+	if [ "$y" -lt 1 ]
+	
+		then
+	
+		x=$entrytotal;
+		y=$(( $x-10 ));
+	
+		else
+
+		y=$(( $y-10 )) 
+	fi ;;
+
+* ) clear 
+    x=$entrytotal
+    y=$(( $x-10 )) ;;
+
+esac
+}
+
+garbagecheck2()
+{
+charcount=`echo $MODIFY | wc -c`
+alphastrip=`echo $MODIFY | sed 's/[a-zA-Z]//g' | wc -c`
+if [[ "$charcount" -gt "$alphastrip" ]]; then
+	isalpha=1
+else
+	isalpha=0
+fi
+case $MODIFY in
+*[0-9]* ) if [[ "$MODIFY" -gt "$entrytotal" ]]
+		then
+			x=0
+			clear
+	elif [[ "$isalpha" -eq "1" ]]
+		then
+			x=0
+			clear
+		else	
+			break
+	fi ;;
+	
+x | X ) clear
+	MODIFY=""
+	continue 2 ;;
+
+* ) clear 
+    MODIFY=""
+    x=0;;
+
+esac
+}
+
+garbagecheck3()
+{
+charcount=`echo $MODIFY | wc -c`
+alphastrip=`echo $MODIFY | sed 's/[a-zA-Z]//g' | wc -c`
+if [[ "$charcount" -gt "$alphastrip" ]]; then
+	isalpha=1
+else
+	isalpha=0
+fi
+case $MODIFY in
+*[0-9]* ) if [[ "$MODIFY" -gt "$entrytotal" ]]
+		then
+			clear
+			x=$entrytotal
+			y=$(( $x-10 ))
+	elif [[ "$isalpha" -eq "1" ]]
+		then
+			clear
+			x=$entrytotal
+			y=$(( $x-10 ))
+	fi ;;
+
+x | X ) clear
+	MODIFY=""
+	continue 2;;
+
+n | N ) clear
+	if [ "$y" -lt 1 ]
+	
+		then
+	
+		x=$entrytotal;
+		y=$(( $x-10 ));
+	
+		else
+
+		y=$(( $y-10 )) 
+	fi ;;
+
+* ) clear 
+    x=$entrytotal
+    y=$(( $x-10 )) ;;
+
+esac
+}
+
+recententries()
+{
+#Check and see if Recent.lnk is in the linklist, if not, add it
+if [ "$RECENT_ENTRIES" -eq 1 ]; then
+listcheck=`grep Recent.lnk $LINKS_DIR/linklist`
+	if [ -z $listcheck ]; then
+		echo "Recent.lnk" >> $LINKS_DIR/linklist
+	fi
+elif [ "$RECENT_ENTRIES" -eq 0 ]; then
+listcheck=`grep Recent.lnk $LINKS_DIR/linklist`
+	if [ ! -z $listcheck ]; then
+		sed '/Recent.lnk/d' $LINKS_DIR/linklist > $LINKS_DIR/linklist
+	fi
+	rebuildlinks
+return
+fi
+
+target=$LINKS_DIR/Recent.lnk
+rm -f $target
+x=$NUM_RECENT_ENTRIES
+ARCBITSNUM=`ls $ENTRIES | wc -l`
+if [[ "$ARCBITSNUM" -lt $x ]]
+then
+        x=$ARCBITSNUM
+fi
+tail -n$x $MASTER_DB | cut -f1 | sed '1!G;h;$!d' > $CONF_DIR/recent.tmp
+recent_entries=`cat $CONF_DIR/recent.tmp`
+for ARTICLE_ID in $recent_entries; do
+TITLE=`head -n1 $ENTRIES/$ARTICLE_ID | tail -n1 | cut -f1`
+PERMAPATH=`head -n1 $ENTRIES/$ARTICLE_ID  | tail -n1 | cut -f4`
+find_template Misc.tpl
+echo "$recent_lil" >> $target
+done
+rm $CONF_DIR/recent.tmp
+rebuildlinks
+}
+
+catsidebar()
+{
+#Check and see if cat.lnk is in the linklist, if not, add it
+#We should determine whether this should be a "category" or "tag"
+#sidebar
+if [ "$CAT_SIDEBAR" -eq 1 ]; then
+listcheck=`grep cat.lnk $LINKS_DIR/linklist`
+        if [ -z $listcheck ]; then
+                echo "cat.lnk" >> $LINKS_DIR/linklist
+        fi
+elif [ "$CAT_SIDEBAR" -eq 0 ]; then
+listcheck=`grep cat.lnk $LINKS_DIR/linklist`
+        if [ ! -z $listcheck ]; then
+                sed '/cat.lnk/d' $LINKS_DIR/linklist > $LINKS_DIR/linklist
+        fi
+        rebuildlinks
+return
+fi
+sed 's/\.\.\///g' $ARCHIVES/tlcategory > $LINKS_DIR/cat.lnk
+cp $ARCHIVES/tlcategory > $LINKS_DIR/cat2.lnk
+rebuildlinks
+}
+
+addsearch()
+{
+#Check and see if Search.lnk is in the linklist, if not, add it
+if [ "$SEARCH" -eq 1 ]; then
+listcheck=`grep Search.lnk $LINKS_DIR/linklist`
+	if [ -z $listcheck ]; then
+		echo "Search.lnk" >> $LINKS_DIR/linklist
+	fi
+elif [ "$SEARCH" -eq 0 ]; then
+listcheck=`grep Search.lnk $LINKS_DIR/linklist`
+	if [ ! -z $listcheck ]; then
+		sed '/Search.lnk/d' $LINKS_DIR/linklist > $LINKS_DIR/linklist
+	fi
+	rebuildlinks
+return
+fi
+if [ ! -f $LINKS_DIR/Search.lnk ]; then
+  find_template Misc.tpl
+touch $LINKS_DIR/Search.lnk
+echo "$search_form" > $LINKS_DIR/Search.lnk
+fi
+rebuildlinks
+}
+
+addquote()
+{
+QUOTE_FILE=$CONF_DIR/quotes
+#Check and see if Quote.lnk is in the linklist, if not, add it
+if [ "$QUOTES" -eq 1 ]; then
+listcheck=`grep Quote.lnk $LINKS_DIR/linklist`
+	if [ -z $listcheck ]; then
+		echo "Quote.lnk" >> $LINKS_DIR/linklist
+	fi
+elif [ "$QUOTES" -eq 0 ]; then
+listcheck=`grep Quote.lnk $LINKS_DIR/linklist`
+	if [ ! -z $listcheck ]; then
+		sed '/Quote.lnk/d' $LINKS_DIR/linklist > $LINKS_DIR/linklist
+	fi
+	rebuildlinks
+return
+fi
+
+LINES=`wc -l $QUOTE_FILE | sed -e 's/ *//' | cut -f1 -d " "`
+rand=0
+while [[ "$rand" -eq 0 ]];
+do
+rand=$(( $RANDOM % $LINES + 1 ))
+done
+newquote=`sed -n "${rand}p;${rand}q" $QUOTE_FILE`
+
+touch $LINKS_DIR/Quote.lnk
+echo "$newquote" > $LINKS_DIR/Quote.lnk
+
+rebuildlinks
+}
+
+################################################################
+##                     Command line stuff                     ##
+################################################################
+
+usage=$(cat <<command_line_usage
+
+usage: `basename $0` [-h] [-v] [-a] [-p] [-t "title"] [-f /path/to/text]
+[-l] [-c "category"] [-u http://link.uri/]
+[-r] [-p] [-s edit stylesheet] [-i /path/to/rss.xml]
+
+Examples: `basename $0` -a -t "My new article" 
+	  `basename $0` -a -t "My pre-written article" -c "Home Improvement" -f /home/$USER/rough_draft
+	  `basename $0` -a  (list article categories)	  
+	  `basename $0` -e ARTICLE_ID
+	  `basename $0` -e  (list last 10 articles and their ARTICLE_ID)		
+	  `basename $0` -p -t "FAQ"
+	  `basename $0` -p -t "FAQ" -f /home/$USER/FAQ_rough_draft
+	  `basename $0` -l -t "Bash Blogger" -c "General" -u http://bashblogger.grimthing.com/
+	  `basename $0` -r (Rebuild site)
+	  `basename $0` -b (Rebuild sidebar)
+	  `basename $0` -i /path/to/rss.xml
+command_line_usage)
+
+quickwrite()
+{
+NOSPACES=`echo $TITLE | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g;/\// s/\//-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"`
+PERMADATE=`date +"%Y/%m/%d"`
+ARTICLE_ID=`date +"%Y%m%d%H%M%S"`
+ARTICLE_AUTHOR="$AUTHOR"
+ARTICLE_AUTHOR_EMAIL="$AUTHOR_EMAIL"
+prettyDATE="$TIMESTAMP"
+pubDATE=`date +"%a, %e %b %Y %T %Z"`
+YEAR=`date +%Y`
+MONTH=`date +%m`
+DAY=`date +%d`
+name $MONTH
+
+PERMALINK="archives/${PERMADATE}/${NOSPACES}/index.html"
+PERMAPATH="archives/${PERMADATE}/$NOSPACES/"
+PARTS="$ENTRIES/$ARTICLE_ID"
+clear
+if [ "$DRAFT" -eq 0 ]; then
+if [ "$BYPASS" -ne 1 ]; then
+edit "$FILE"
+clear
+if [ "$AUTOSPELL" -eq 1 ]; then
+	spell "$FILE" 
+fi
+echo -n " Save to draft? (y/N) :"; read CHOICE
+case $CHOICE in
+y | Y ) target="$CONF_DIR/drafts/$ARTICLE_ID";
+	echo "$TITLE" > $target;
+	cat "$FILE" >> $target;
+	rm $CONF_DIR/scratch &>/dev/null;
+	clear;
+	return;;
+* ) clear;
+    CONTENT=`$FORMATTING_PLUGIN "$FILE"` ;;
+esac
+fi
+fi
+CONTENT=`$FORMATTING_PLUGIN "$FILE"`
+if [ "$BYPASS" -ne 1 ]; then
+catcount=`wc -l $CATEGORIES | awk '{ print $1 }'`
+if [ "$catcount" -gt 1 ]; then
+	target="$CONF_DIR/category.tmp"
+	target2="$CONF_DIR/category2.tmp"
+	echo -e "Remove the leading #'s to add category\nAdd leading #'s to remove category" > $target
+	cat $CATEGORIES >> $target
+	sed 's/^/#/g' $target > $target2
+	mv $target2 $target
+	edit $target
+	sed "/#/d" $target > $target2
+	mv $target2 $target
+	CATEGORY=`cat $target`
+	catcount=`wc -l $target | awk '{ print $1 }'`
+	rm $target
+else
+	catcount="1"
+	CATEGORY=`cat $CATEGORIES`
+fi
+fi
+clear
+cutmeta=$(( $catcount+2 ))
+if [ "$RSS" -eq 1 ]; then
+	if [ "$PODCAST" -eq 1 ];then
+		echo -n "Include podcast? (y/N) :"; read CAST
+		case $CAST in
+			y ) addpodcast ;;
+			Y ) addpodcast ;;
+			* ) ENCLOSURE_BIT=0
+			    clear ;;
+		esac
+	else
+		ENCLOSURE_BIT=0
+	fi
+fi
+
+if [ "$AUTOFORMAT" -eq 1 ]; then
+CONTENT=`sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' $FILE | sed 's/\&/\&amp;/g' | sed 's/\~/\&#126;/g'`
+fi
+echo -e "$ARTICLE_ID\t$TITLE" >> $MASTER_DB
+WEBPATH="../../../"
+find_template Misc.tpl
+echo -e "$ARTICLE_ID\t$month_lil" >> $ARCHIVES/monthly/$YEAR-$MONTH
+if [ "$catcount" -gt 1 ]; then
+	count=$catcount
+	while [ "$count" -gt 0 ]; do
+		category=`echo "$CATEGORY" | head -n$count | tail -n1`
+		touch $ARCHIVES/category/"$category"
+		WEBPATH="../../"
+                find_template Misc.tpl
+		echo -e "$ARTICLE_ID\t$list_item_link" >> "$ARCHIVES/category/$category" 
+		count=$(( $count-1 ))
+	done
+else
+	touch "$ARCHIVES/category/$CATEGORY"
+	WEBPATH="../../"
+        find_template Misc.tpl
+	echo -e "$ARTICLE_ID\t$list_item_link" >> $ARCHIVES/category/"$CATEGORY"
+fi
+echo -e "$TITLE\t$ARTICLE_AUTHOR\t$ARTICLE_AUTHOR_EMAIL\t$PERMAPATH\t$ENCLOSURE_BIT\t$catcount\t$prettyDATE\t$pubDATE" > $PARTS
+echo "$ENCLOSURE" >> $PARTS
+echo "$CATEGORY" >> $PARTS
+echo "$CONTENT" >> $PARTS
+export TITLE ARTICLE_ID ARTICLE_AUTHOR ARTICLE_AUTHOR_EMAIL prettyDATE pubDATE YEAR MONTH DAY PERMAPATH catcount CATEGORY cutmeta CONTENT ENCLOSURE_BIT ENCLOSURE
+updatepermalink
+recententries
+catsidebar
+addsearch
+addquote
+updatearchives
+rebuildindex
+if [ "$RSS" -eq 1 ]; then
+	generateRSS "$RSS_MAXENTRIES" "$ROOTDIR/index.xml"
+fi
+
+rm $CONF_DIR/scratch &>/dev/null
+clear
+DRAFT="0"
+pingback
+pingservices
+}
+
+quickedit()
+{
+ARTICLE_ID=$EDIT
+FILE2EDIT=$ENTRIES/$ARTICLE_ID
+clear
+if [ ! -e "$FILE2EDIT" ]; then
+echo "No such file by that name.";
+break
+fi
+META=`head -n1 $FILE2EDIT | tail -n1`
+splitbits "$META"
+sed -n "1,${cutmeta}p" "$FILE2EDIT" > $FILE2EDIT.meta
+sed "1,${cutmeta}d" "$FILE2EDIT" > $FILE2EDIT.tmp
+if [ "$AUTOFORMAT" -eq 1 ]; then
+sed 's/^<p>//g;s/<\/p>//g' $FILE2EDIT.tmp > $FILE2EDIT
+else
+cat $FILE2EDIT.tmp > $FILE2EDIT
+fi
+edit "$FILE2EDIT"
+if [ "$AUTOSPELL" -eq 1 ]; then
+        spell "$FILE2EDIT"
+fi
+mv $FILE2EDIT.meta $FILE2EDIT.tmp
+if [ "$AUTOFORMAT" -eq 1 ]; then
+sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' $FILE2EDIT >> $FILE2EDIT.tmp
+else
+$FORMATTING_PLUGIN $FILE2EDIT >> $FILE2EDIT.tmp
+fi
+mv $FILE2EDIT.tmp $FILE2EDIT
+updatepermalink
+recententries
+catsidebar
+addsearch
+addquote
+rebuildindex
+if [ "$RSS" -eq "1" ];then
+	generateRSS "$RSS_MAXENTRIES" "$ROOTDIR/index.xml"
+fi
+}
+
+
+quickpage()
+{
+## If the page title is passed via the -t flag, this will find the existing page and open it for editing.  
+## If nothing's found, it will create a new page with the given title. 
+
+NOSPACES=`echo $TITLE | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g;/\// s/\//-/g;y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"`
+if ! grep "$NOSPACES" $PAGE_DIR/* >& /dev/null; then
+	PAGE_ID=`date +"%Y%m%d%H%M%S"`
+	NEW_PAGE=1
+else
+	ID=`grep -H "$NOSPACES" $PAGE_DIR/* | cut -d: -f1`
+	PAGE_ID=`basename $ID`
+	sed -e '1,2d' "$PAGE_DIR/$PAGE_ID" > $PAGE_DIR/scratch
+	TITLE=`sed -n '1p' $PAGE_DIR/$PAGE_ID`
+	rm "$PAGE_DIR/$PAGE_ID"
+	NEW_PAGE=0
+fi
+PARTS="$PAGE_DIR/$PAGE_ID"
+
+clear
+edit $PAGE_DIR/scratch
+
+find_template Misc.tpl
+
+NEWPAGE=$(cat<<ThisIsANewPage
+$TITLE
+$NOSPACES
+$page_header
+$PAGE_CONTENT
+ThisIsANewPage)
+
+echo "$NEWPAGE" > $PARTS
+
+if [ "$NEW_PAGE" -eq 1 ]; then
+	touch $LINKS_DIR/Pages.lnk
+        find_template Misc.tpl
+	echo "" >> $LINKS_DIR/Pages.lnk
+	sed 's/="/="..\//g' $LINKS_DIR/Pages.lnk > $LINKS_DIR/Pages2.lnk >& /dev/null
+fi
+
+rm $PAGE_DIR/scratch
+rebuildlinks
+rebuildpages
+rebuildindex
+clear
+}
+
+
+quicklink()
+{
+target=$LINKS_DIR/${CATEGORY}.lnk
+if [ -z "$CATEGORY" ]; then
+x=`wc -l $LINKS_DIR/linklist | awk '{ print $1 }'`
+y=1
+echo "  No such catergory $CATEGORY, use one of the following:"
+while [ "$y" -le "$x" ]; do
+linkcat=`head -n$y $LINKS_DIR/linklist | tail -n1 | cut -d. -f1`
+echo "  $linkcat"
+y=$(( $y+1 ))
+done
+flee 0
+fi
+find_template Misc.tpl
+echo "$nav_link" >>  "$target"
+rebuildlinks
+rebuildindex
+}
+
+edit()
+{
+	file=$1
+	$EDITOR $file
+}
+
+addpodcast()
+{
+clear
+while true; do
+echo -n " Enter the full path to the file you want to podcast :"; read PODCAST
+echo "$PODCAST"
+if [ -z "$PODCAST" ]; then
+clear
+pcast_name=`basename $PODCAST`
+echo " File $pcast_name is null... "
+else
+break
+fi
+done
+echo " You selected $pcast_name as your podcast."
+echo -n " Is this correct? (Y/n) :"; read CHOICE
+
+case $CHOICE in
+n | N ) return ;;
+* ) echo -e "\n Good..." ;;
+esac
+
+## Make a guess as to what the filetype is...
+guess=`file -bi "$PODCAST"`
+
+FILENAME_LENGTH=`echo "$PODCAST" | sed 's/ /_/g' | wc -c`
+if [ "$TYPE" = "application/x-bittorrent" ]; then
+	CUT_LENGHT=$(( $FILENAME_LENGTH-8 ))
+	else
+	CUT_LENGTH=$(( $FILENAME_LENGTH-4 ))
+fi
+EXTENSION=`basename "$PODCAST" | cut -c$CUT_LENGTH-`
+FILENAME_DATE=`date +"%G-%m-%d_"`
+FILENAME_SITENAME=`echo "$SITENAME" | sed "/'/ s/'//g;/ / s/ /_/g;/\./ s/\.//g;/?/ s/?//g;/\!/ s/\!//g;/,/ s/\,//g;/\"/ s/\"//g"`
+FILENAME="${FILENAME_DATE}${FILENAME_SITENAME}${EXTENSION}"
+ENCLOSURE_SIZE=`du "$PODCAST" | awk '{ print $1 }'`;
+
+## copy the file to the podcast directory and rename it
+if [ ! -d $ROOTDIR/podcasts ]
+then
+        echo "podcasts directory does not exits atempting to create"
+        mkdir -p $ROOTDIR/podcasts || echo "directory creation failed"
+        if [ ! -d $ROOTDIR/podcasts ]
+                then return
+        fi                 
+        echo "directory successfully created"
+fi
+if [ ! -f "$PODCAST" ]; then
+cp "$PODCAST" $ROOTDIR/podcasts/$FILENAME
+fi
+find_template Misc.tpl
+$ENCLOSURE
+ENCLOSURE_BIT=1
+popd >& /dev/null
+}
+
+################################################################
+##                   Library Functions                        ##
+################################################################
+
+find_template()
+{
+  if [ -e "$CONF_DIR/user_templates/$1" ] ; then
+    source "$CONF_DIR/user_templates/$1"
+  else
+    source "$CONF_DIR/templates/$1"
+  fi
+}
+
+flee()
+{
+  rm $CONF_DIR/blogging
+  exit $1
+}
+
+menubanner()
+{
+	bordertrim=" +--------------------------------------------------------------+";
+	echo "|,$btitle" >$CONF_DIR/foo
+	echo " $bordertrim"
+	cat $CONF_DIR/foo | awk -F, '{printf(" %1s %42s %1s\n", " | BashBlogger-0.3.7", $2, $1)}'
+	echo " $bordertrim"
+	rm -f $CONF_DIR/foo
+}
+
+basename()
+{
+	dir=$1
+	suffix=$2
+	basename="${dir##*/}"
+	if [ -n "$suffix" ];then
+		basename="${basename%$suffix}"
+	fi
+	printf "$basename\n"
+}
+
+spell()
+{
+	file=$1
+	$SPELLCHECKER -H -c $file
+}
+
+
+# Easier to use variables
+TAB='	'
+NL='
+'
+
+pingback()
+{
+## Automagically pingback sites that support pingback
+## We /could/ do something similar with Trackback, if only
+## Trackback wasn't /stupid/.
+
+pingback_list="$CONF_DIR/pingback_list"
+pingback_tmp="$CONF_DIR/pingback_tmp"
+sed -e "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID | sed 's/href=\"/\n/g' | grep http | cut -d\" -f1 > $pingback_tmp
+URL_no_http=`echo "$URL" | cut -c8- | cut -d\/ -f1`
+sed "/${URL_no_http}/d" $pingback_tmp > $pingback_list
+rm $pingback_tmp
+
+x=1
+pb_count=`wc -l "$pingback_list" | awk '{ print $1 }'`
+if [ "$pb_count" -gt 0 ]; then
+	if [ "$BYPASS" -ne 1 ]; then
+	echo " Trying to automagically pingback $pb_count URL's."
+	echo " Give me a minute, this might take a bit..."
+	fi
+fi
+if [ "$pb_count" -lt 1 ]; then
+echo
+elif [ "$pb_count" -eq 1 ]; then
+p_url=`cat "$pingback_list"`
+xmlrpc_url=`curl -sI $p_url | grep X-Pingback | cut -c13-`
+	if [ -z "$xmlrpc_url" ]; then
+		echo
+	else
+xml_data_to_send=$(cat<<XML2Send
+<?xml version="1.0"?>
+<methodCall>
+<methodName>pingback.ping</methodName>
+<params>
+<param><value><string>$URL/$PERMALINK</string></value></param>
+<param><value><string>$p_url</string></value></param>
+</params>
+</methodCall>
+XML2Send)
+echo
+echo "  Pinging $xmlrpc_url... "
+curl -s -H "Content-Type: text/xml" -A "bashblogger-$VERSION" -d "$xml_data_to_send" "$xmlrpc_url" >& /dev/null
+	fi
+elif [ "$pb_count" -gt 1 ]; then
+while [ "$x" -le "$pb_count" ]; do
+p_url=`head -n$x "$pingback_list" | tail -n1`
+xmlrpc_url=`curl -sI "$p_url" | grep X-Pingback | cut -c13-`
+if [ -z "$xmlrpc_url" ]; then
+	echo	
+else
+xml_data_to_send=$(cat<<XML2Send
+<?xml version="1.0"?>
+<methodCall>
+<methodName>pingback.ping</methodName>
+<params>
+<param><value><string>$URL/$PERMALINK</string></value></param>
+<param><value><string>$p_url</string></value></param>
+</params>
+</methodCall>
+XML2Send)
+echo
+echo " Pinging $xmlrpc_url..."
+curl -s -H "Content-Type: text/xml" -A "bashblogger-$VERSION" -d "$xml_data_to_send" "$xmlrpc_url" >& /dev/null
+fi
+x=$(( $x+1 ))
+done
+fi
+rm "$pingback_list"
+}
+
+pingservices()
+{
+## Uncomment (or add) services you want to notify when
+## you post a new article in $CONFIG_DIR/update_services
+## Everything is disabled by default.
+
+xml_data_to_send=$(cat<<XML2Send
+<?xml version="1.0"?>
+<methodCall>
+   <methodName>weblogUpdates.ping</methodName>
+   <params>
+      <param><value>$SITENAME</value></param>
+      <param><value>$URL/</value></param>
+   </params>
+</methodCall>
+XML2Send)
+update_services="$CONF_DIR/update_services"
+list="$CONF_DIR/us.txt"
+touch $list
+sed '/#/d' $update_services > $list
+us_count=`wc -l $list | awk '{ print $1 }'`
+
+if [ "$us_count" -eq 0 ]; then
+> $list
+elif [ "$us_count" -eq 1 ]; then
+ping_url=`cat "$list"`
+curl -s -H "Content-Type: text/xml" -A "bashblogger-$VERSION" -d "$xml_data_to_send" "$ping_url" >& /dev/null
+elif [ "$us_count" -gt 1 ]; then
+x=1
+while [ "$x" -lt "$us_count" ]; do
+ping_url=`head -n$x $list | tail -n1`
+curl -H "Content-Type: text/xml" -A "bashblogger-$VERSION" -d "$xml_data_to_send" "$ping_url" >& /dev/null
+x=$(( $x+1 ))
+done
+fi
+rm $list
+}
+
+rebuild_sidebar()
+{
+        rebuildlinks
+        rebuildpages
+        rebuildindex
+}
+
+
+VERSION="0.3.7"
+################################################################
+##                         Main Loop                          ##
+################################################################
+appname=`basename $0`
+export appname
+#if [ ! -e $HOME/.${appname}.conf ]; then
+#	bblog_setup
+#fi
+. $HOME/.bblog.conf
+PAGE=0
+PAGE_DIR=$CONF_DIR/pages
+LINKS_DIR=$CONF_DIR/links
+MASTER_DB=$CONF_DIR/master.db
+CATEGORIES=$CONF_DIR/categories
+ARCHIVES=$CONF_DIR/archives
+ENTRIES=$CONF_DIR/entries
+ARTICLE=0
+LINKAGE=0
+EDITSTYLE=0
+TITLE=""
+FILE=""
+DRAFT="0"
+BYPASS="0"
+
+if [ "$COOL_URI" -eq 0 ]; then
+INDEX="index.html"
+else
+INDEX=""
+fi
+
+if [ -e $CONF_DIR/blogging ] ; then
+  echo "It appears I'm already running"
+  echo "Check the pid in $CONF_DIR/blogging"
+  echo "and remove that file if needed, then re-run me"
+  # This needs to be 'exit' and not 'flee' cause we don't want
+  # to remove the lock file
+  exit 1
+else
+  echo "$$" > $CONF_DIR/blogging
+fi
+
+while true 
+do
+	trap "echo 'Not Cool';exit" 15 
+	trap "echo;echo 'Not Cool';exit" INT
+	if [ $# -eq 0 ]; then
+		clear
+		menu
+		echo " ";
+	
+	elif [ $# -gt 0 ]; then
+		while getopts ":t:f:c:u:i:eC:hvrsalpb" Option
+		do
+			case $Option in
+				p ) PAGE=1 ;;
+				a ) ARTICLE=1 ;;
+				l ) LINKAGE=1 ;;
+				e ) shift;EDIT=1;
+				    FILE2EDIT=$1 ;;
+				t ) TITLE=$OPTARG ;;
+				f ) FILE=$OPTARG;
+				    catcount=1;
+				    BYPASS=1 ;;
+				u ) LINKURL=$OPTARG ;;
+				c ) CATEGORY=$OPTARG ;;
+				s ) EDITSTYLE=1 ;;
+				r ) rebuildsite; flee 0 ;;
+				i ) FILE2IMPORT="$OPTARG";
+				    importRSS;
+				    flee 0 ;;
+				h ) echo "$usage"; flee 0 ;;
+				v ) btitle="Philip McClure <grim@grimthing.com>";
+                                    menubanner;
+				    echo;
+				    flee 0 ;;
+				b ) rebuild_sidebar;
+				    flee 0 ;;	
+				\? ) echo "$usage"; flee 0 ;;
+				* ) echo "$usage"; flee 0 ;;
+			esac
+		done
+	if [ "$PAGE" -eq 1 ]; then
+		if [ -z "$TITLE" ]; then
+			echo "I need an existing page title or a new one."; flee 1
+		else
+			quickpage 
+		fi
+		flee 0
+	elif [ "$LINKAGE" -eq 1 ]; then
+			quicklink
+		flee 0
+	elif [ "$EDITSTYLE" -eq 1 ]; then
+			editstylesheet
+		flee 0
+	elif [ "$ARTICLE" -eq 1 ]; then
+		if [ ! -e "$FILE" ]; then
+			FILE="$CONF_DIR/scratch"
+		fi
+		if [ -z "$CATEGORY" ]; then
+			CATEGORY="General"
+		fi
+		if [ -z "$TITLE" ]; then
+			echo
+			cat "$CATEGORIES"
+			echo
+			flee 1
+		fi
+		quickwrite
+		flee 0
+	elif [ "$EDIT" -eq 1 ]; then
+		if [ -z "$FILE2EDIT" ]; then
+		 x=1
+		while [ "$x" -lt 11 ]; do 
+		cat -n $MASTER_DB | sort -rn | cut -f2- | head -n$x | tail -n1
+		x=$(($x+1))
+		done
+		echo
+		flee 0
+	        elif [ -n "$EDIT" ]; then
+		EDIT="$FILE2EDIT"	
+		quickedit
+		fi
+	flee 0
+	else
+		echo "$usage"; flee 0 ;
+	fi
+	fi
+done

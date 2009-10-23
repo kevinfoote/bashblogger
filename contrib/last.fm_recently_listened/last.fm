@@ -1,0 +1,45 @@
+#!/bin/bash
+
+source $HOME/.bblog.conf
+
+# First, we check if we're actively blogging and then bail out if we are
+# so as not to clobber ourselves
+if [ ! -e $CONF_DIR/blogging ] ; then
+	# Now we can deal with getting the list of recently listened to
+	# songs from Last.fm
+        # CHANGEME: use your last.fm username, not mine :)
+	wget -q -O /tmp/recenttracks.xml http://ws.audioscrobbler.com/1.0/user/hunleyd/recenttracks.xml
+	if [ ! -e $CONF_DIR/recenttracks.xml ] ; then
+		# we haven't listened to anything recently
+		:
+	else
+		has_content=`grep name /tmp/recenttracks.xml|head -1`
+		if [ -z "$has_content" ] ; then
+			# we haven't listened to anything recently
+			:
+		else
+			number_of_songs=`grep name /tmp/recenttracks.xml|wc -l`
+			for i in `seq 1 $number_of_songs`
+			do
+				artist=`grep -m $i artist /tmp/recenttracks.xml|tail -1|cut -d\> -f2-|cut -d\< -f1`
+				track=`grep -m $i name /tmp/recenttracks.xml|tail -1|cut -d\> -f2-|cut -d\< -f1`
+				album=`grep -m $i album /tmp/recenttracks.xml|tail -1|cut -d\> -f2-|cut -d\< -f1`
+				url=`grep -m $i url /tmp/recenttracks.xml|tail -1|cut -d\> -f2-|cut -d\< -f1`
+				echo "<li><a href=\"$url\">$artist - $track</a></li>" >> /tmp/Recently_Listened_To.lnk
+			done
+			diff -q /tmp/Recently_Listened_To.lnk $HOME/.bashblogger/links/Recently_Listened_To.lnk &>/dev/null
+			if [ $? -eq 1 ] ; then
+				# just in case we started blogging
+				# between the second  check and now
+				while [ -e $CONF_DIR/blogging ]
+				do
+					sleep 3
+				done
+				mv /tmp/Recently_Listened_To.lnk $HOME/.bashblogger/links/Recently_Listened_To.lnk
+			else
+				rm /tmp/Recently_Listened_To.lnk
+			fi
+		fi
+	fi
+        rsync -q -r -a -z --delete public_html hunley.homeip.net:~
+fi

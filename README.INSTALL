@@ -1,0 +1,41 @@
+Installation
+------------
+
+Open a terminal and cd into this directory and type:
+
+./install
+
+install assumes that bash is located in /bin ( i.e. /bin/bash ).  If the
+script fails to exectue, you may need to edit it to point to bash on your
+system. `which bash` should give you a good idea if you're stumped.
+
+The bblog script itself will also need to be updated to point to the
+correct location of bash. You don't have to change it, but it won't
+run if you don't.
+
+The installer is going to ask you a series of questions in order to
+configure bashblogger to run your site.  If you don't know the answer
+to one of the questions, hitting the enter key will usually give you a
+safe default.
+
+If you are one of the statistical few who will actually file a bug
+report and you happen to have a problem to report with bashblogger,
+send an email to:
+
+	grim@grimthing.com
+
+with "bashblogger" (one word) somewhere in the subject line.  It is of
+vital importance that you include that one word "bashblogger" in the
+subject line.  
+
+Do to the deluge of offers for male enhancement drugs and bored young
+women who want me to check out their webcam (could the two be related?),
+I've setup whitelists for people I trust and then I feed the rest to
+spamassassin (which I've set to "fucking ruthless").
+
+If we didn't go to school together or you don't know where I hid the
+body, chances are good that you're not on one of the whitelists, and
+so I recommend, nay, I *implore*, you to add "bashblogger" to the
+subject line.  
+
+Thanks in advance.
