@@ -484,7 +484,6 @@ rm $FILE $FILE2EDIT
 }
 
 
-
 modarticlecat()
 {
 clear
@@ -606,16 +605,16 @@ splitbits "$META"
 cat "$FILE2CHK" | sed -n "1,${cutmeta}p" > $FILE2CHK.meta
 cat "$FILE2CHK" | sed "1,${cutmeta}d"  > $FILE2CHK.tmp
 if [ "$AUTOFORMAT" -eq 1 ]; then
-cat $FILE2CHK.tmp | sed 's/^<p>//g;s/<\/p>//g' > $FILE2CHK
+	cat $FILE2CHK.tmp | sed 's/^<p>//g;s/<\/p>//g' > $FILE2CHK
 else
-cat $FILE2CHK.tmp > $FILE2CHK
+	cat $FILE2CHK.tmp > $FILE2CHK
 fi  
 spell "$FILE2CHK";
 mv $FILE2CHK.meta $FILE2CHK.tmp
 if [ "$AUTOFORMAT" -eq 1 ]; then
-cat $FILE2CHK | sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' >> $FILE2CHK.tmp
+	cat $FILE2CHK | sed 's/^/<p>/g;s/$/<\/p>/g;s/^<p><\/p>$//g' >> $FILE2CHK.tmp
 else
-cat $FILE2CHK >> $FILE2CHK.tmp
+	cat $FILE2CHK >> $FILE2CHK.tmp
 fi
 mv $FILE2CHK.tmp $FILE2CHK
 rm -f "$FILE2CHK.bak";
@@ -630,7 +629,7 @@ echo
 rm $ARCHIVES/monthly/* $ARCHIVES/category/* >& /dev/null
 rm -rf $ROOTDIR/archives/* >& /dev/null
 mkdir -p $ROOTDIR/archives >& /dev/null
-chmod 777 $ROOTDIR/archives
+chmod 0755 $ROOTDIR/archives
 echo -n "  Rebuilding permalink articles..."
 for x in $ENTRIES/*
 	do
@@ -1326,30 +1325,30 @@ fi
 tail -n$counter $MASTER_DB | cut -f1 | sed '1!G;h;$!d' > $tmp
 index_entries=`cat $tmp`
 for ARTICLE_ID in $index_entries; do
-META=`head -n1 $ENTRIES/$ARTICLE_ID | tail -n1`
-splitbits "$META"
-CONTENT=`sed "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID` 
-CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | head -n${catcount}`
-if [ "$catcount" -eq 1 ]; then
-        thiscat=$CATEGORY
-        find_template Misc.tpl
-        multi_cat=$multicat
-else
-        abc=0
-        xyz=1
-        while [ "$xyz" -le "$catcount" ]; do
-                thiscat=`echo "$CATEGORY" | head -n$xyz | tail -n1`
-                find_template Misc.tpl
-                echo "$multicat" >> $tmp2
-		abc=$(( $abc+1 ));
-                xyz=$(( $xyz+1 ));
-        done
-multi_cat=`cat $tmp2`
-fi
-rm $tmp2 >& /dev/null
-find_template ENTRY.tpl
-echo "$article_entry" >> $scratch
-counter=$(( $counter-1 ))
+	META=`head -n1 $ENTRIES/$ARTICLE_ID | tail -n1`
+	splitbits "$META"
+	CONTENT=`sed "1,${cutmeta}d" $ENTRIES/$ARTICLE_ID` 
+	CATEGORY=`sed '1,2d' $ENTRIES/$ARTICLE_ID | head -n${catcount}`
+	if [ "$catcount" -eq 1 ]; then
+        	thiscat=$CATEGORY
+        	find_template Misc.tpl
+        	multi_cat=$multicat
+	else
+        	abc=0
+        	xyz=1
+        	while [ "$xyz" -le "$catcount" ]; do
+                	thiscat=`echo "$CATEGORY" | head -n$xyz | tail -n1`
+                	find_template Misc.tpl
+                	echo "$multicat" >> $tmp2
+			abc=$(( $abc+1 ));
+                	xyz=$(( $xyz+1 ));
+        	done
+	multi_cat=`cat $tmp2`
+	fi
+	rm $tmp2 >& /dev/null
+	find_template ENTRY.tpl
+	echo "$article_entry" >> $scratch
+	counter=$(( $counter-1 ))
 done
 cat $LINKS_DIR/links.txt >> $scratch
 ENTRIES_regular_extra_crispy=`cat $scratch`
